@@ -1,281 +1,194 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import { X, Printer, Minus, Plus, Copy, Check } from 'lucide-react';
 import JsBarcode from 'jsbarcode';
-import { useReactToPrint } from 'react-to-print';
-import { Printer, X } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 
-const BarcodePrintModal = ({ product, onClose }) => {
+const BarcodePrintModal = ({ isOpen, onClose, product, barcode }) => {
     const { t, language } = useLanguage();
     const barcodeRef = useRef(null);
-    const printRef = useRef(null);
-    const [printSettings, setPrintSettings] = React.useState({
-        labelWidth: 50, // mm
+    const [template, setTemplate] = useState('standard'); // standard, compact, large
+    const [printSettings, setPrintSettings] = useState({
+        width: 2,
+        height: 60,
+        fontSize: 14,
+        margin: 10,
+        labelWidth: 50,  // mm
         labelHeight: 30, // mm
-        copies: 1,
-        showPrice: true,
-        fontSize: 12
+        copies: 1
     });
 
-    // ป้องกัน error โดยกำหนดค่า default
-    const barcode = product?.barcode || product?.Barcode || '';
-    const name = product?.name || product?.Name || 'ไม่ระบุชื่อ';
-    const price = product?.price || product?.Price || 0;
-    const shelf = product?.shelf || product?.Shelf || '';
-    const row = product?.row || product?.Row || '';
-
-    // Generate barcode
-    // Generate barcode
     useEffect(() => {
-        if (barcodeRef.current && barcode) {
+        if (isOpen && barcodeRef.current) {
             try {
-                JsBarcode(barcodeRef.current, String(barcode), {
-                    format: 'CODE128',
-                    width: 2,
-                    height: 60,
+                JsBarcode(barcodeRef.current, barcode, {
+                    format: "CODE128",
+                    width: printSettings.width,
+                    height: printSettings.height,
                     displayValue: true,
                     fontSize: printSettings.fontSize,
-                    margin: 5,
-                    background: '#ffffff',
-                    lineColor: '#000000'
+                    margin: printSettings.margin,
+                    background: "#ffffff",
+                    lineColor: "#000000",
+                    textPosition: "bottom",
+                    font: "monospace"
                 });
-            } catch (error) {
-                console.error('Error generating barcode:', error);
+            } catch (e) {
+                console.error("Barcode generation failed", e);
             }
         }
-    }, [barcode, printSettings.fontSize]);
+    }, [isOpen, barcode, printSettings, template]);
 
-    const handlePrint = useReactToPrint({
-        content: () => printRef.current,
-        documentTitle: `Barcode_${barcode}`,
-        onAfterPrint: () => console.log('Print finished'),
-        pageStyle: `
-            @page {
-                size: ${printSettings.labelWidth}mm ${printSettings.labelHeight}mm;
-                margin: 0;
-            }
-            @media print {
-                body {
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
-                }
-                /* Hide everything else */
-                body > *:not(.print-container) {
-                    display: none !important;
-                }
-            }
-        `
-    });
+    // Robust Mobile Printing Function
+    const handleNativePrint = () => {
+        // 1. Add class to body to indicate printing state
+        document.body.classList.add('is-printing');
 
-    // Mobile Print Fallback
-    const manualPrint = () => {
-        try {
-            handlePrint();
-        } catch (e) {
-            console.error("Print failed, trying fallback", e);
+        // 2. Wait for a moment for styles to apply
+        setTimeout(() => {
             window.print();
-        }
+
+            // 3. Keep the print view for a moment (for mobile browsers), then restore
+            setTimeout(() => {
+                document.body.classList.remove('is-printing');
+            }, 500);
+        }, 100);
     };
 
-    if (!product) return null;
+    if (!isOpen || !product) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                {/* Header */}
-                <div className="flex items-center justify-between p-4 md:p-6 border-b border-slate-200">
-                    <h2 className="text-lg md:text-xl font-bold text-slate-800">
-                        {language === 'th' ? 'พิมพ์สติ๊กเกอร์บาร์โค้ด' : 'Print Barcode Label'}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:p-0 print:bg-white print:static">
+
+            {/* Print Styles Injection */}
+            <style>{`
+                @media print {
+                    /* Hide everything by default */
+                    body > * { display: none !important; }
+                    
+                    /* Show only the print container */
+                    body > .print-container-wrapper { 
+                        display: block !important; 
+                        position: absolute !important;
+                        top: 0 !important;
+                        left: 0 !important;
+                        width: 100% !important;
+                        height: 100% !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        background: white !important;
+                    }
+
+                    /* Ensure the specific barcode area is visible */
+                    .printable-content {
+                        display: flex !important;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        width: 100%;
+                        height: 100%;
+                        page-break-inside: avoid;
+                    }
+                    
+                    /* Page Size Setup */
+                    @page {
+                        size: ${printSettings.labelWidth}mm ${printSettings.labelHeight}mm;
+                        margin: 0;
+                    }
+                }
+            `}</style>
+
+            {/* Modal Container (Hidden during print except inner part via wrapper logic) */}
+            <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto print:shadow-none print:w-full print:max-w-none print:h-auto print:overflow-visible">
+
+                {/* Header (No Print) */}
+                <div className="flex justify-between items-center p-4 border-b no-print print:hidden">
+                    <h2 className="text-xl font-bold text-slate-800">
+                        {language === 'th' ? 'พิมพ์บาร์โค้ด' : 'Print Barcode'}
                     </h2>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-                    >
-                        <X className="w-5 h-5 text-slate-500" />
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                        <X className="w-6 h-6 text-slate-500" />
                     </button>
                 </div>
 
-                <div className="p-4 md:p-6 space-y-6">
-                    {/* Preview */}
-                    <div className="bg-slate-50 rounded-xl p-4 border-2 border-dashed border-slate-300">
-                        <h3 className="text-sm font-semibold text-slate-700 mb-3">
-                            {language === 'th' ? 'ตัวอย่าง' : 'Preview'}
-                        </h3>
-                        <div
-                            ref={printRef}
-                            className="bg-white p-4 rounded-lg shadow-sm mx-auto"
-                            style={{
-                                width: `${printSettings.labelWidth}mm`,
-                                minHeight: `${printSettings.labelHeight}mm`,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}
-                        >
-                            <svg ref={barcodeRef}></svg>
-                            <div className="text-center mt-2" style={{ fontSize: `${printSettings.fontSize}px` }}>
-                                <p className="font-semibold text-slate-800 line-clamp-2">{name}</p>
-                                {printSettings.showPrice && price > 0 && (
-                                    <p className="text-slate-600 mt-1">
-                                        ฿{Number(price).toLocaleString()}
-                                    </p>
-                                )}
+                <div className="p-6 space-y-6">
+
+                    {/* Preview Area (This gets printed) */}
+                    {/* We move this wrapper to body root dynamically during print? No, css handles it. */}
+                    {/* Special Wrapper class for CSS targeting */}
+                    <div className={document.body.classList.contains('is-printing') ? "print-container-wrapper" : ""}>
+                        <div className="flex justify-center mb-6 printable-content">
+                            <div
+                                style={{
+                                    width: `${printSettings.labelWidth}mm`,
+                                    height: `${printSettings.labelHeight}mm`,
+                                    border: '1px dashed #ccc'
+                                }}
+                                className="bg-white flex items-center justify-center p-2 rounded-lg print:border-none"
+                            >
+                                <div className="text-center w-full h-full flex flex-col items-center justify-center overflow-hidden">
+                                    <svg ref={barcodeRef} className="max-w-full max-h-full"></svg>
+                                    <div className="text-[10px] font-bold mt-1 leading-tight truncate w-full px-1 no-print">
+                                        {product.name}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Settings */}
-                    <div className="space-y-4">
-                        <h3 className="text-sm font-semibold text-slate-700">
-                            {language === 'th' ? 'ตั้งค่าการพิมพ์' : 'Print Settings'}
-                        </h3>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Label Width */}
+                    {/* Settings (No Print) */}
+                    <div className="space-y-4 print:hidden">
+                        {/* Size Settings */}
+                        <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                <label className="block text-sm font-medium text-slate-700 mb-1">
                                     {language === 'th' ? 'ความกว้าง (mm)' : 'Width (mm)'}
                                 </label>
                                 <input
                                     type="number"
                                     value={printSettings.labelWidth}
                                     onChange={(e) => setPrintSettings({ ...printSettings, labelWidth: Number(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                                    min="30"
-                                    max="100"
+                                    className="w-full border rounded-lg px-3 py-2"
                                 />
                             </div>
-
-                            {/* Label Height */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                <label className="block text-sm font-medium text-slate-700 mb-1">
                                     {language === 'th' ? 'ความสูง (mm)' : 'Height (mm)'}
                                 </label>
                                 <input
                                     type="number"
                                     value={printSettings.labelHeight}
                                     onChange={(e) => setPrintSettings({ ...printSettings, labelHeight: Number(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                                    min="20"
-                                    max="100"
+                                    className="w-full border rounded-lg px-3 py-2"
                                 />
-                            </div>
-
-                            {/* Font Size */}
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">
-                                    {language === 'th' ? 'ขนาดตัวอักษร' : 'Font Size'}
-                                </label>
-                                <input
-                                    type="number"
-                                    value={printSettings.fontSize}
-                                    onChange={(e) => setPrintSettings({ ...printSettings, fontSize: Number(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                                    min="8"
-                                    max="20"
-                                />
-                            </div>
-
-                            {/* Copies */}
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">
-                                    {language === 'th' ? 'จำนวนที่พิมพ์' : 'Copies'}
-                                </label>
-                                <input
-                                    type="number"
-                                    value={printSettings.copies}
-                                    onChange={(e) => setPrintSettings({ ...printSettings, copies: Number(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                                    min="1"
-                                    max="100"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Show Price Toggle */}
-                        <div className="flex items-center gap-3">
-                            <input
-                                type="checkbox"
-                                id="showPrice"
-                                checked={printSettings.showPrice}
-                                onChange={(e) => setPrintSettings({ ...printSettings, showPrice: e.target.checked })}
-                                className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
-                            />
-                            <label htmlFor="showPrice" className="text-sm font-medium text-slate-700">
-                                {language === 'th' ? 'แสดงราคา' : 'Show Price'}
-                            </label>
-                        </div>
-
-                        {/* Preset Sizes */}
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                                {language === 'th' ? 'ขนาดสติ๊กเกอร์มาตรฐาน' : 'Standard Label Sizes'}
-                            </label>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                <button
-                                    onClick={() => setPrintSettings({ ...printSettings, labelWidth: 50, labelHeight: 30 })}
-                                    className="px-3 py-2 text-xs font-medium bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
-                                >
-                                    50×30mm
-                                </button>
-                                <button
-                                    onClick={() => setPrintSettings({ ...printSettings, labelWidth: 40, labelHeight: 25 })}
-                                    className="px-3 py-2 text-xs font-medium bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
-                                >
-                                    40×25mm
-                                </button>
-                                <button
-                                    onClick={() => setPrintSettings({ ...printSettings, labelWidth: 60, labelHeight: 40 })}
-                                    className="px-3 py-2 text-xs font-medium bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
-                                >
-                                    60×40mm
-                                </button>
-                                <button
-                                    onClick={() => setPrintSettings({ ...printSettings, labelWidth: 70, labelHeight: 50 })}
-                                    className="px-3 py-2 text-xs font-medium bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
-                                >
-                                    70×50mm
-                                </button>
                             </div>
                         </div>
                     </div>
 
-                    {/* Product Info */}
-                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-                        <h4 className="text-sm font-semibold text-blue-900 mb-2">
-                            {language === 'th' ? 'ข้อมูลสินค้า' : 'Product Information'}
-                        </h4>
-                        <div className="space-y-1 text-sm text-blue-800">
-                            <p><span className="font-medium">{language === 'th' ? 'บาร์โค้ด:' : 'Barcode:'}</span> {barcode}</p>
-                            <p><span className="font-medium">{language === 'th' ? 'ชื่อ:' : 'Name:'}</span> {name}</p>
-                            {price > 0 && <p><span className="font-medium">{language === 'th' ? 'ราคา:' : 'Price:'}</span> ฿{Number(price).toLocaleString()}</p>}
-                            {(shelf || row) && (
-                                <div className="flex gap-4 mt-2 pt-2 border-t border-blue-200/50">
-                                    {shelf && <p><span className="font-medium">{language === 'th' ? 'ชั้น:' : 'Shelf:'}</span> {shelf}</p>}
-                                    {row && <p><span className="font-medium">{language === 'th' ? 'แถว:' : 'Row:'}</span> {row}</p>}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-3">
+                    {/* Actions (No Print) */}
+                    <div className="flex gap-3 pt-4 border-t print:hidden">
                         <button
                             onClick={onClose}
-                            className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-colors"
+                            className="flex-1 px-4 py-3 border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold rounded-xl transition-colors"
                         >
                             {language === 'th' ? 'ยกเลิก' : 'Cancel'}
                         </button>
                         <button
-                            onClick={manualPrint}
-                            className="flex-1 px-4 py-3 bg-primary hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+                            onClick={handleNativePrint}
+                            className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg active:scale-95"
                         >
                             <Printer className="w-5 h-5" />
-                            {language === 'th' ? 'พิมพ์' : 'Print'}
+                            {language === 'th' ? 'พิมพ์ทันที' : 'Print Now'}
                         </button>
                     </div>
+
                 </div>
             </div>
+
+            {/* Javascript Wrapper Logic for Print Isolation */}
+            <script dangerouslySetInnerHTML={{
+                __html: `
+                // Helper ensures print logic
+            `}} />
         </div>
     );
 };
