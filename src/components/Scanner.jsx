@@ -90,8 +90,8 @@ const Scanner = ({ onScanSuccess }) => {
     return (
         <div className="w-full max-w-md mx-auto relative">
             {/* Version Indicator */}
-            <div className="absolute top-2 right-2 z-30 bg-black/50 text-white text-[10px] px-2 rounded-full pointer-events-none">
-                v3.0 (Latest)
+            <div className="absolute top-2 right-2 z-30 bg-green-600/90 text-white text-[10px] px-2 rounded-full pointer-events-none shadow-sm">
+                v3.1 (Auto-Update)
             </div>
 
             {/* Scan Area */}
