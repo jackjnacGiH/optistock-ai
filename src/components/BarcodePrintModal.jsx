@@ -9,7 +9,6 @@ const BarcodePrintModal = ({ isOpen, onClose, product, barcode }) => {
     const previewBarcodeRef = useRef(null);
     const printBarcodeRef = useRef(null);
 
-    // Default settings that user expects
     const [printSettings, setPrintSettings] = useState({
         labelWidth: 50,  // mm
         labelHeight: 30, // mm
@@ -52,33 +51,31 @@ const BarcodePrintModal = ({ isOpen, onClose, product, barcode }) => {
 
     if (!isOpen || !product) return null;
 
-    // Logic to force orientation based on dimensions
     const isLandscape = printSettings.labelWidth > printSettings.labelHeight;
     const orientationKeyword = isLandscape ? 'landscape' : 'portrait';
 
-    // The Portal Content (What actually gets printed)
     const printContent = (
         <div id="print-portal-root">
             <style>{`
                 @media print {
+                    /* STRICT RESET */
+                    html, body {
+                        width: 100%;
+                        height: 100%;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        overflow: hidden !important; /* Cut off anything extra */
+                    }
+
                     /* Hide everything else */
                     body > *:not(#print-portal-root) {
                         display: none !important;
                     }
-                    body {
-                        background: white;
-                        margin: 0;
-                        padding: 0;
-                        visibility: visible;
-                    }
 
-                    /* 
-                       THE TRICK: Force orientation keyword valid for most browsers
-                       This tells the printer driver "This is a horizontal page"
-                    */
+                    /* AUTO ORIENTATION & ZERO MARGINS */
                     @page {
                         size: ${printSettings.labelWidth}mm ${printSettings.labelHeight}mm ${orientationKeyword};
-                        margin: 0; /* Important for label printers */
+                        margin: 0mm; /* Crucial for continuous printing */
                     }
 
                     #print-portal-root {
@@ -86,13 +83,15 @@ const BarcodePrintModal = ({ isOpen, onClose, product, barcode }) => {
                         position: fixed;
                         top: 0;
                         left: 0;
-                        width: 100vw;
-                        height: 100vh;
+                        /* Force exact size, do NOT use 100vh/vw which might be slightly off */
+                        width: ${printSettings.labelWidth}mm !important;
+                        height: ${printSettings.labelHeight}mm !important;
                         background: white;
                         z-index: 99999;
-                        /* Center content on the page */
-                        align-items: center;  
+                        align-items: center;
                         justify-content: center;
+                        overflow: hidden !important; /* Double safety */
+                        page-break-after: always; /* Ensure each label is treated as a page if looped, but for copies it helps reset */
                     }
                 }
                 
@@ -102,36 +101,34 @@ const BarcodePrintModal = ({ isOpen, onClose, product, barcode }) => {
             `}</style>
 
             {/* 
-               Print Container
-               We force this container to exactly match the requested mm size.
-               Because @page handles the canvas size, we just fill it.
+               SAFE AREA CONTAINER 
+               We reduce the inner box by 1mm to ensure it definitely fits inside the physical label
+               without triggering a page spill-over.
             */}
             <div style={{
-                width: `${printSettings.labelWidth}mm`,
-                height: `${printSettings.labelHeight}mm`,
+                width: `${printSettings.labelWidth - 1}mm`,  // Safety margin
+                height: `${printSettings.labelHeight - 1}mm`, // Safety margin
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '2mm',
+                padding: '0',
                 boxSizing: 'border-box',
                 overflow: 'hidden'
             }}>
                 <div style={{ flex: 1, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg ref={printBarcodeRef} style={{ maxWidth: '100%', maxHeight: '100%' }}></svg>
+                    <svg ref={printBarcodeRef} style={{ maxWidth: '98%', maxHeight: '98%' }}></svg>
                 </div>
                 <div style={{
                     textAlign: 'center',
-                    fontSize: '10px',
+                    fontSize: '9px', // Slightly smaller safe font
                     fontWeight: 'bold',
                     width: '100%',
-                    lineHeight: '1.1',
-                    marginTop: '2px',
-                    wordBreak: 'break-word',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden'
+                    lineHeight: '1',
+                    marginTop: '1px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
                 }}>
                     {product.name}
                 </div>
@@ -156,8 +153,6 @@ const BarcodePrintModal = ({ isOpen, onClose, product, barcode }) => {
                     </div>
 
                     <div className="p-6 overflow-y-auto">
-
-                        {/* Preview */}
                         <div className="flex flex-col items-center justify-center mb-6">
                             <p className="text-sm text-slate-500 mb-2">
                                 {language === 'th' ? 'ตัวอย่าง (Preview)' : 'Preview'}
@@ -177,9 +172,11 @@ const BarcodePrintModal = ({ isOpen, onClose, product, barcode }) => {
                                     </div>
                                 </div>
                             </div>
+                            <p className="text-xs text-amber-600 mt-2 bg-amber-50 px-2 py-1 rounded">
+                                {language === 'th' ? '* หากพิมพ์แล้วข้ามแผ่น ลองลดขนาดความสูงลงเล็กน้อย' : '* If skipping labels, try reducing height slightly'}
+                            </p>
                         </div>
 
-                        {/* Controls */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">
