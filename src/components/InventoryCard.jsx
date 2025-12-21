@@ -98,14 +98,16 @@ const InventoryCard = ({ product }) => {
 
             {showPrintModal && (
                 <BarcodePrintModal
+                    isOpen={showPrintModal}
                     product={{
                         ...product,
-                        barcode,
-                        name,
-                        price,
-                        unit,
-                        stock
+                        barcode: barcode,
+                        name: name,
+                        price: price,
+                        unit: unit,
+                        stock: stock
                     }}
+                    barcode={barcode}
                     onClose={() => setShowPrintModal(false)}
                 />
             )}
