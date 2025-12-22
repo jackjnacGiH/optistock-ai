@@ -9,12 +9,18 @@ const Scanner = ({ onScanSuccess, autoStart = false }) => {
     const fileInputRef = useRef(null);
     const startedRef = useRef(false);
 
+    // Use ref to keep track of the latest callback to prevent stale closures
+    const onScanSuccessRef = useRef(onScanSuccess);
+
+    useEffect(() => {
+        onScanSuccessRef.current = onScanSuccess;
+    }, [onScanSuccess]);
+
     // Cleanup on unmount
     useEffect(() => {
-        // Auto start
+        // Auto start logic
         if (autoStart && !startedRef.current) {
             startedRef.current = true;
-            // Small delay to ensure DOM is ready
             setTimeout(() => {
                 handleStartScan();
             }, 100);
@@ -23,7 +29,7 @@ const Scanner = ({ onScanSuccess, autoStart = false }) => {
         return () => {
             stopScanner();
         };
-    }, []);
+    }, []); // Keep dependency empty to run only once on mount
 
     const stopScanner = async () => {
         if (scannerRef.current) {
@@ -53,7 +59,10 @@ const Scanner = ({ onScanSuccess, autoStart = false }) => {
 
             const successCallback = (decodedText) => {
                 stopScanner();
-                onScanSuccess(decodedText);
+                // Always call the latest version of the function
+                if (onScanSuccessRef.current) {
+                    onScanSuccessRef.current(decodedText);
+                }
             };
 
             // Try Back Camera (Environment)
@@ -89,7 +98,9 @@ const Scanner = ({ onScanSuccess, autoStart = false }) => {
 
             html5QrCode.scanFile(imageFile, true)
                 .then(decodedText => {
-                    onScanSuccess(decodedText);
+                    if (onScanSuccessRef.current) {
+                        onScanSuccessRef.current(decodedText);
+                    }
                 })
                 .catch(err => {
                     setError("ไม่พบบาร์โค้ดในภาพ กรุณาลองใหม่");
