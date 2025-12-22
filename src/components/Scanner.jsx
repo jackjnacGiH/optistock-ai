@@ -2,14 +2,24 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { Camera, Image as ImageIcon, RefreshCw, AlertCircle } from 'lucide-react';
 
-const Scanner = ({ onScanSuccess }) => {
+const Scanner = ({ onScanSuccess, autoStart = false }) => {
     const [isScanning, setIsScanning] = useState(false);
     const [error, setError] = useState('');
     const scannerRef = useRef(null);
     const fileInputRef = useRef(null);
+    const startedRef = useRef(false);
 
     // Cleanup on unmount
     useEffect(() => {
+        // Auto start
+        if (autoStart && !startedRef.current) {
+            startedRef.current = true;
+            // Small delay to ensure DOM is ready
+            setTimeout(() => {
+                handleStartScan();
+            }, 100);
+        }
+
         return () => {
             stopScanner();
         };

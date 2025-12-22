@@ -4,9 +4,10 @@ import { LayoutDashboard, ScanLine, History, Menu, Package, Languages, Brain, Se
 import clsx from 'clsx';
 import { useLanguage } from '../i18n/LanguageContext';
 
-const NavItem = ({ to, icon: Icon, label, active }) => (
+const NavItem = ({ to, icon: Icon, label, active, onClick }) => (
     <Link
         to={to}
+        onClick={onClick}
         className={clsx(
             "flex flex-col items-center justify-center w-full py-2 text-xs font-medium transition-colors duration-200 md:flex-row md:justify-start md:px-4 md:py-3 md:text-sm md:gap-3 md:rounded-lg no-select",
             active
@@ -38,7 +39,18 @@ const Layout = () => {
                 <nav className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto scrollable">
                     <NavItem to="/" icon={LayoutDashboard} label={t('nav.dashboard')} active={path === "/"} />
                     <NavItem to="/scan" icon={ScanLine} label={t('nav.scan')} active={path === "/scan"} />
-                    <NavItem to="/search" icon={Search} label={language === 'th' ? 'ค้นหา' : 'Search'} active={path === "/search"} />
+                    <NavItem
+                        to="/search"
+                        icon={Search}
+                        label={language === 'th' ? 'ค้นหา' : 'Search'}
+                        active={path === "/search"}
+                        onClick={(e) => {
+                            if (path === '/search') {
+                                e.preventDefault();
+                                window.location.reload();
+                            }
+                        }}
+                    />
                     <NavItem to="/history" icon={History} label={t('nav.history')} active={path === "/history"} />
                     <NavItem to="/ai-analysis" icon={Brain} label="AI Insights" active={path === "/ai-analysis"} />
                 </nav>
@@ -79,7 +91,18 @@ const Layout = () => {
             {/* Mobile Bottom Navigation */}
             <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center px-1 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50 flex-shrink-0">
                 <NavItem to="/" icon={LayoutDashboard} label={t('nav.dashboard')?.split(' ')[0]} active={path === "/"} />
-                <NavItem to="/search" icon={Search} label={language === 'th' ? 'ค้นหา' : 'Search'} active={path === "/search"} />
+                <NavItem
+                    to="/search"
+                    icon={Search}
+                    label={language === 'th' ? 'ค้นหา' : 'Search'}
+                    active={path === "/search"}
+                    onClick={(e) => {
+                        if (path === '/search') {
+                            e.preventDefault();
+                            window.location.reload();
+                        }
+                    }}
+                />
 
                 <div className="relative -top-5 mx-2">
                     <Link to="/scan" className="flex items-center justify-center w-14 h-14 rounded-full bg-primary text-white shadow-lg shadow-primary/30 active:scale-95 transition-transform">

@@ -57,32 +57,58 @@ const ProductSearch = () => {
 
     const handleSearch = (term) => {
         if (!term) return;
+
+        const searchTerm = String(term).trim().toLowerCase();
+
+        // Loose comparison for better matching
         const found = inventoryList.find(i =>
-            String(i.barcode) === term || String(i.name) === term
+            String(i.barcode || '').trim().toLowerCase() === searchTerm ||
+            String(i.name || '').trim().toLowerCase() === searchTerm
         );
+
         if (found) {
             setSelectedProduct(found);
             setView('RESULT');
             setSearchQuery('');
             setShowSuggestions(false);
         } else {
-            alert(t('scan.productNotFound'));
+            // Fallback: Try partial match on Name only if exact match fails
+            const partialFound = inventoryList.find(i =>
+                String(i.name || '').toLowerCase().includes(searchTerm)
+            );
+
+            if (partialFound) {
+                // Autoselect if partial match found (simple version) or ask user
+                // For now, let's just select it to be user friendly
+                setSelectedProduct(partialFound);
+                setView('RESULT');
+                setSearchQuery('');
+                setShowSuggestions(false);
+            } else {
+                alert(t('scan.productNotFound'));
+            }
         }
     };
 
     const handleScanSuccess = (code) => {
         setView('LOADING');
-        // Small delay to simulate processing
+        // Clean the scanned code
+        const cleanCode = String(code).trim();
+
         setTimeout(() => {
-            const found = inventoryList.find(i => String(i.barcode) === String(code));
+            // Find with case-insensitive and trimmed comparison
+            const found = inventoryList.find(i =>
+                String(i.barcode).trim().toLowerCase() === cleanCode.toLowerCase()
+            );
+
             if (found) {
                 setSelectedProduct(found);
                 setView('RESULT');
             } else {
-                alert(`${t('scan.productNotFound')}: ${code}`);
+                alert(`${t('scan.productNotFound')}: ${cleanCode}`);
                 setView('SEARCH');
             }
-        }, 500);
+        }, 300);
     };
 
     const handleReset = () => {
@@ -111,7 +137,7 @@ const ProductSearch = () => {
                 <div className="text-center mb-4">
                     <h2 className="text-xl font-bold text-slate-800">{language === 'th' ? 'สแกนสินค้า' : 'Scan Product'}</h2>
                 </div>
-                <Scanner onScanSuccess={handleScanSuccess} />
+                <Scanner onScanSuccess={handleScanSuccess} autoStart={true} />
             </div>
         );
     }
