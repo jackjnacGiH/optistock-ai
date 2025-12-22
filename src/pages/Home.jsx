@@ -56,13 +56,23 @@ const Home = () => {
                     const stock = parseInt(i.stock);
                     const min = parseInt(i.minStock);
 
-                    // Skip if stock or minStock is invalid (NaN, 0, negative, or empty)
-                    if (isNaN(stock) || isNaN(min) || min <= 0) {
+                    // Skip if values are invalid (NaN or empty)
+                    if (isNaN(stock) || isNaN(min)) {
                         return false;
                     }
 
-                    // Show only items where stock is positive but less than or equal to minStock
-                    return stock > 0 && stock <= min;
+                    // Skip if minStock is not set (0 or negative)
+                    if (min <= 0) {
+                        return false;
+                    }
+
+                    // Skip if stock is exactly 0 or empty (but allow negative values)
+                    if (stock === 0) {
+                        return false;
+                    }
+
+                    // Show items where stock is less than or equal to minStock (including negative)
+                    return stock <= min;
                 });
 
                 const lowStockCount = lowStockList.length;
