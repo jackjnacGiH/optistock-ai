@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
-import { LayoutDashboard, ScanLine, History, Menu, Package, Languages, Brain } from 'lucide-react';
+import { LayoutDashboard, ScanLine, History, Menu, Package, Languages, Brain, Search } from 'lucide-react';
 import clsx from 'clsx';
 import { useLanguage } from '../i18n/LanguageContext';
 
@@ -38,6 +38,7 @@ const Layout = () => {
                 <nav className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto scrollable">
                     <NavItem to="/" icon={LayoutDashboard} label={t('nav.dashboard')} active={path === "/"} />
                     <NavItem to="/scan" icon={ScanLine} label={t('nav.scan')} active={path === "/scan"} />
+                    <NavItem to="/search" icon={Search} label={language === 'th' ? 'ค้นหา' : 'Search'} active={path === "/search"} />
                     <NavItem to="/history" icon={History} label={t('nav.history')} active={path === "/history"} />
                     <NavItem to="/ai-analysis" icon={Brain} label="AI Insights" active={path === "/ai-analysis"} />
                 </nav>
@@ -78,28 +79,17 @@ const Layout = () => {
             {/* Mobile Bottom Navigation */}
             <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center px-1 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50 flex-shrink-0">
                 <NavItem to="/" icon={LayoutDashboard} label={t('nav.dashboard')?.split(' ')[0]} active={path === "/"} />
-                <NavItem to="/ai-analysis" icon={Brain} label="AI" active={path === "/ai-analysis"} />
+                <NavItem to="/search" icon={Search} label={language === 'th' ? 'ค้นหา' : 'Search'} active={path === "/search"} />
 
                 <div className="relative -top-5 mx-2">
-                    <Link
-                        to="/scan"
-                        onClick={() => window.dispatchEvent(new CustomEvent('reset-scan-view'))}
-                        className="flex items-center justify-center w-14 h-14 rounded-full bg-primary text-white shadow-lg shadow-primary/30 active:scale-95 transition-transform"
-                    >
+                    <Link to="/scan" className="flex items-center justify-center w-14 h-14 rounded-full bg-primary text-white shadow-lg shadow-primary/30 active:scale-95 transition-transform">
                         <ScanLine className="w-7 h-7" />
                     </Link>
                 </div>
 
                 <NavItem to="/history" icon={History} label={t('nav.history')} active={path === "/history"} />
-
-                {/* Mobile Language Toggle */}
-                <button
-                    onClick={toggleLanguage}
-                    className="flex flex-col items-center justify-center w-full py-2 text-xs font-medium text-slate-500 hover:text-primary transition-colors no-select"
-                >
-                    <Languages className="w-6 h-6" />
-                    <span>{language === 'th' ? 'TH' : 'EN'}</span>
-                </button>
+                {/* Replaced Mobile Language with AI for better space usage, or keep AI */}
+                <NavItem to="/ai-analysis" icon={Brain} label="AI" active={path === "/ai-analysis"} />
             </nav>
         </div>
     );
