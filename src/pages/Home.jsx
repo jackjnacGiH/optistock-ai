@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Package, TrendingUp, AlertTriangle, Activity, Printer } from 'lucide-react';
+import { Package, TrendingUp, AlertTriangle, Activity, Printer, FileSpreadsheet } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
 import { api } from '../services/api';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -241,6 +241,37 @@ const Home = () => {
                                 Print this list to perform manual restocking.
                             </p>
                             <div className="flex gap-2 w-full md:w-auto">
+                                <button
+                                    onClick={() => {
+                                        // 1. Convert to CSV
+                                        const headers = ['Barcode', 'Product Name', 'Category', 'Current Stock', 'Min Stock', 'Price', 'Value'];
+                                        const csvContent = [
+                                            headers.join(','),
+                                            ...lowStockItems.map(item => [
+                                                `"${String(item.barcode).replace(/"/g, '""')}"`, // Handle quotes in data
+                                                `"${String(item.name).replace(/"/g, '""')}"`,
+                                                `"${String(item.category || '').replace(/"/g, '""')}"`,
+                                                item.stock,
+                                                item.minStock,
+                                                item.price,
+                                                item.stock * (item.price || 0)
+                                            ].join(','))
+                                        ].join('\n');
+
+                                        // 2. Create Blob and Download
+                                        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' }); // Add BOM for Excel UTF-8
+                                        const url = URL.createObjectURL(blob);
+                                        const link = document.createElement('a');
+                                        link.setAttribute('href', url);
+                                        link.setAttribute('download', `Low_Stock_Report_${new Date().toISOString().split('T')[0]}.csv`);
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                    }}
+                                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-green-600 border border-green-700 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-all shadow-sm"
+                                >
+                                    <FileSpreadsheet className="w-4 h-4" /> Export Excel
+                                </button>
                                 <button
                                     onClick={handlePrint}
                                     className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
