@@ -168,31 +168,47 @@ const Home = () => {
                 <Package className="absolute -right-10 -bottom-10 w-48 h-48 md:w-64 md:h-64 text-white/5 rotate-12" />
             </div>
 
-            {/* Hidden Printable Component */}
-            <div className="hidden">
-                <div ref={printRef} className="p-8 bg-white text-black">
-                    <div className="mb-6 border-b pb-4">
-                        <h1 className="text-2xl font-bold mb-2">Low Stock Report</h1>
-                        <p className="text-sm text-gray-500">Date: {new Date().toLocaleString()}</p>
-                        <p className="text-sm text-gray-500">Items: {lowStockItems.length}</p>
+            {/* Hidden Printable Component (Must exist in DOM but invisible) */}
+            <div style={{ height: 0, overflow: "hidden" }}>
+                <div ref={printRef} className="p-8 bg-white text-black min-w-[210mm]">
+                    <style type="text/css" media="print">
+                        {`
+                            @media print {
+                                @page { size: A4; margin: 20mm; }
+                                body { -webkit-print-color-adjust: exact; }
+                            }
+                        `}
+                    </style>
+                    <div className="mb-6 border-b border-black/10 pb-4">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h1 className="text-2xl font-bold text-black mb-1">Low Stock Report</h1>
+                                <p className="text-sm text-gray-500">OptiStock AI Inventory System</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-sm text-gray-500">Date: {new Date().toLocaleDateString('th-TH')}</p>
+                                <p className="text-sm text-gray-500">Items: {lowStockItems.length}</p>
+                            </div>
+                        </div>
                     </div>
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="border-b border-gray-300">
-                                <th className="py-2">Item</th>
-                                <th className="py-2 text-right">Stock</th>
-                                <th className="py-2 text-right">Min</th>
+                            <tr className="border-b-2 border-black">
+                                <th className="py-2 font-bold text-black">Item Name</th>
+                                <th className="py-2 font-bold text-black text-right w-24">Barcode</th>
+                                <th className="py-2 font-bold text-black text-right w-20">Stock</th>
+                                <th className="py-2 font-bold text-black text-right w-20">Min</th>
                             </tr>
                         </thead>
                         <tbody>
                             {lowStockItems.map((item, idx) => (
-                                <tr key={idx} className="border-b border-gray-100">
-                                    <td className="py-2">
-                                        <div className="font-bold">{item.name}</div>
-                                        <div className="text-xs text-gray-400">#{item.barcode}</div>
+                                <tr key={idx} className="border-b border-gray-200 break-inside-avoid">
+                                    <td className="py-3 pr-2 align-top">
+                                        <div className="font-medium text-black">{item.name || 'Unknown Product'}</div>
                                     </td>
-                                    <td className={`py-2 text-right font-bold ${item.stock <= 0 ? 'text-red-600' : ''}`}>{item.stock}</td>
-                                    <td className="py-2 text-right text-gray-600">{item.minStock}</td>
+                                    <td className="py-3 text-right font-mono text-sm text-gray-600 align-top">{item.barcode}</td>
+                                    <td className={`py-3 text-right font-bold align-top ${item.stock <= 0 ? 'text-red-600' : 'text-black'}`}>{item.stock}</td>
+                                    <td className="py-3 text-right text-gray-600 align-top">{item.minStock}</td>
                                 </tr>
                             ))}
                         </tbody>
