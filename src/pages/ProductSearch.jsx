@@ -122,7 +122,7 @@ const ProductSearch = () => {
                 alert(`${t('scan.productNotFound')}: ${scannedCode}`);
                 setView('SEARCH');
             }
-        }, 300);
+        }, 800);
     };
 
     const handleReset = () => {

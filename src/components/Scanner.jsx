@@ -23,7 +23,7 @@ const Scanner = ({ onScanSuccess, autoStart = false }) => {
             startedRef.current = true;
             setTimeout(() => {
                 handleStartScan();
-            }, 100);
+            }, 500);
         }
 
         return () => {
