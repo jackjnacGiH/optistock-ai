@@ -267,13 +267,38 @@ function generateReport(note = '') {
 }
 // --- 4. Logic Functions (Updated) ---
 
+// Helper function to clear inventory cache when data changes
+function clearInventoryCache() {
+  try {
+    const cache = CacheService.getScriptCache();
+    cache.remove('inventory_data');
+  } catch (e) {
+    console.log('Cache clear error:', e);
+  }
+}
+
 function getInventory() {
+  // Try to get from cache first (5 minutes TTL)
+  const cache = CacheService.getScriptCache();
+  const cacheKey = 'inventory_data';
+  const cached = cache.get(cacheKey);
+  
+  if (cached) {
+    try {
+      return JSON.parse(cached);
+    } catch (e) {
+      // If cache is corrupted, continue to fetch fresh data
+      console.log('Cache parse error:', e);
+    }
+  }
+  
+  // Fetch fresh data from sheet
   const sheet = getOrCreateSheet(SHEET_NAMES.INVENTORY);
   const data = sheet.getDataRange().getValues();
   data.shift(); 
   const map = getColumnMap(sheet, 'INVENTORY');
   
-  return data.map(row => ({
+  const inventory = data.map(row => ({
     barcode: row[map.barcode],
     name: row[map.name],
     stock: map.stock !== undefined ? (row[map.stock] === "" ? 0 : row[map.stock]) : 0, 
@@ -286,6 +311,16 @@ function getInventory() {
     shelf: map.shelf !== undefined ? row[map.shelf] : '',
     row: map.row !== undefined ? row[map.row] : ''
   }));
+  
+  // Store in cache for 5 minutes (300 seconds)
+  try {
+    cache.put(cacheKey, JSON.stringify(inventory), 300);
+  } catch (e) {
+    // Cache storage failed (data might be too large), continue without caching
+    console.log('Cache storage error:', e);
+  }
+  
+  return inventory;
 }
 
 function getHistory() {
@@ -367,6 +402,9 @@ function updateStock(barcode, amount, type, newImageUrl = null) {
   const rowArray = buildRowArray(historyMap, historyData);
   historySheet.appendRow(rowArray);
 
+  // Clear cache since inventory data changed
+  clearInventoryCache();
+
   return { success: true, newStock: newStock, message: 'Stock updated' };
 }
 
@@ -378,6 +416,10 @@ function addProduct(product) {
   const rowArray = buildRowArray(map, product);
   
   sheet.appendRow(rowArray);
+  
+  // Clear cache since inventory data changed
+  clearInventoryCache();
+  
   return { success: true, message: 'Product added' };
 }
 
@@ -400,6 +442,9 @@ function bulkUpdateMinStock(updates) {
       if (map.lastUpdated !== undefined) sheet.getRange(row, map.lastUpdated + 1).setValue(new Date());
     }
   });
+  
+  // Clear cache since inventory data changed
+  clearInventoryCache();
   
   return { success: true, message: 'Bulk update success' };
 }
