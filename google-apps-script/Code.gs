@@ -417,17 +417,95 @@ function uploadImage(base64Data, barcode) {
     const fileName = `product_${barcode || 'unknown'}_${new Date().getTime()}.jpg`;
     const blob = Utilities.newBlob(decodedBlob, 'image/jpeg', fileName);
     
-    // Save to Drive (Folder: OptiStock_Product_Images)
-    const folders = DriveApp.getFoldersByName('OptiStock_Product_Images');
-    let folder = folders.hasNext() ? folders.next() : DriveApp.createFolder('OptiStock_Product_Images');
+    // Use Drive API v3 via UrlFetchApp (Alternative to DriveApp)
+    const FOLDER_ID = '1PqF8v-vh27CXHmIyOJptf9Sry5K18cQm';
+    const accessToken = ScriptApp.getOAuthToken();
     
-    const file = folder.createFile(blob);
-    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    // Upload file to Drive
+    const metadata = {
+      name: fileName,
+      parents: [FOLDER_ID],
+      mimeType: 'image/jpeg'
+    };
     
-    // Construct Direct Link
-    const imageUrl = `https://drive.google.com/uc?export=view&id=${file.getId()}`;
+    const boundary = '-------314159265358979323846';
+    const delimiter = "\r\n--" + boundary + "\r\n";
+    const close_delim = "\r\n--" + boundary + "--";
     
-    return { success: true, imageUrl: imageUrl, message: 'Image uploaded successfully' };
+    const multipartRequestBody =
+      delimiter +
+      'Content-Type: application/json\r\n\r\n' +
+      JSON.stringify(metadata) +
+      delimiter +
+      'Content-Type: image/jpeg\r\n' +
+      'Content-Transfer-Encoding: base64\r\n' +
+      '\r\n' +
+      encodedData +
+      close_delim;
+    
+    const uploadResponse = UrlFetchApp.fetch(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + accessToken,
+          'Content-Type': 'multipart/related; boundary=' + boundary
+        },
+        payload: multipartRequestBody,
+        muteHttpExceptions: true
+      }
+    );
+    
+    const uploadResult = JSON.parse(uploadResponse.getContentText());
+    
+    if (!uploadResult.id) {
+      throw new Error('Upload failed: ' + uploadResponse.getContentText());
+    }
+    
+    const fileId = uploadResult.id;
+    
+    // Make file public
+    UrlFetchApp.fetch(
+      `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + accessToken,
+          'Content-Type': 'application/json'
+        },
+        payload: JSON.stringify({
+          role: 'reader',
+          type: 'anyone'
+        }),
+        muteHttpExceptions: true
+      }
+    );
+    
+    // Get public URL
+    const imageUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+    
+    // Update Inventory Sheet
+    const invSheet = getOrCreateSheet(SHEET_NAMES.INVENTORY);
+    const invData = invSheet.getDataRange().getValues();
+    const invMap = getColumnMap(invSheet, 'INVENTORY');
+    
+    for (let i = 1; i < invData.length; i++) {
+      if (String(invData[i][invMap.barcode]) === String(barcode)) {
+        const rowIndex = i + 1;
+        if (invMap.imageUrl !== undefined) {
+          invSheet.getRange(rowIndex, invMap.imageUrl + 1).setValue(imageUrl);
+        }
+        break;
+      }
+    }
+    
+    return { 
+      success: true, 
+      imageUrl: imageUrl,
+      message: 'Image uploaded successfully',
+      fileId: fileId
+    };
+    
   } catch (e) {
     return { success: false, error: e.toString() };
   }

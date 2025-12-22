@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Minus, ArrowLeft, Loader2, Camera, Save, X } from 'lucide-react';
+import { Search, Plus, Minus, ArrowLeft, Loader2, X } from 'lucide-react';
 import Scanner from '../components/Scanner';
 import InventoryCard from '../components/InventoryCard';
 import { api } from '../services/api';
@@ -13,13 +13,6 @@ const ScanPage = () => {
     const [adjType, setAdjType] = useState('IN'); // IN, OUT
     const [manualCode, setManualCode] = useState('');
     const [loading, setLoading] = useState(false);
-
-    // Image Upload States
-    const [selectedImage, setSelectedImage] = useState(null);
-    const [imagePreview, setImagePreview] = useState(null);
-    const [uploadingImage, setUploadingImage] = useState(false);
-    const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
-    const fileInputRef = useRef(null);
 
     // Smart Search States
     const [inventoryList, setInventoryList] = useState([]);
@@ -193,7 +186,7 @@ const ScanPage = () => {
         if (!product) return;
         setLoading(true);
         try {
-            const response = await api.updateStock(product.barcode, amount, adjType, 'WebApp', uploadedImageUrl);
+            const response = await api.updateStock(product.barcode, amount, adjType);
             if (response.success) {
                 alert(response.message || t('scan.stockUpdated'));
 
@@ -204,8 +197,7 @@ const ScanPage = () => {
                             ...item,
                             stock: adjType === 'IN'
                                 ? parseInt(item.stock) + amount
-                                : parseInt(item.stock) - amount,
-                            imageUrl: uploadedImageUrl || item.imageUrl // Update image if uploaded
+                                : parseInt(item.stock) - amount
                         };
                     }
                     return item;
@@ -231,8 +223,6 @@ const ScanPage = () => {
         setAmount(0); // Default to 0 as requested
         setManualCode('');
         setSuggestions([]);
-        // Reset image states
-        handleRemoveImage();
     };
 
     if (view === 'LOADING') {
