@@ -92,20 +92,34 @@ const ProductSearch = () => {
 
     const handleScanSuccess = (code) => {
         setView('LOADING');
-        // Clean the scanned code
-        const cleanCode = String(code).trim();
+        const scannedCode = String(code).trim();
 
         setTimeout(() => {
-            // Find with case-insensitive and trimmed comparison
-            const found = inventoryList.find(i =>
-                String(i.barcode).trim().toLowerCase() === cleanCode.toLowerCase()
+            // Strategy 1: Exact String Match (Case Insensitive)
+            let found = inventoryList.find(i =>
+                String(i.barcode || '').trim().toLowerCase() === scannedCode.toLowerCase()
             );
+
+            // Strategy 2: Numeric Match (Handles leading zeros e.g., "00123" vs "123")
+            if (!found && !isNaN(scannedCode)) {
+                try {
+                    const scannedNum = Number(scannedCode);
+                    found = inventoryList.find(i => {
+                        const itemBarcode = i.barcode;
+                        // Skip text barcodes
+                        if (!itemBarcode || isNaN(itemBarcode)) return false;
+                        return Number(itemBarcode) === scannedNum;
+                    });
+                } catch (e) {
+                    console.warn("Numeric comparison failed", e);
+                }
+            }
 
             if (found) {
                 setSelectedProduct(found);
                 setView('RESULT');
             } else {
-                alert(`${t('scan.productNotFound')}: ${cleanCode}`);
+                alert(`${t('scan.productNotFound')}: ${scannedCode}`);
                 setView('SEARCH');
             }
         }, 300);
