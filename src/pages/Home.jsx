@@ -168,87 +168,98 @@ const Home = () => {
                 <Package className="absolute -right-10 -bottom-10 w-48 h-48 md:w-64 md:h-64 text-white/5 rotate-12" />
             </div>
 
+            {/* Hidden Printable Component */}
+            <div className="hidden">
+                <div ref={printRef} className="p-8 bg-white text-black">
+                    <div className="mb-6 border-b pb-4">
+                        <h1 className="text-2xl font-bold mb-2">Low Stock Report</h1>
+                        <p className="text-sm text-gray-500">Date: {new Date().toLocaleString()}</p>
+                        <p className="text-sm text-gray-500">Items: {lowStockItems.length}</p>
+                    </div>
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="border-b border-gray-300">
+                                <th className="py-2">Item</th>
+                                <th className="py-2 text-right">Stock</th>
+                                <th className="py-2 text-right">Min</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {lowStockItems.map((item, idx) => (
+                                <tr key={idx} className="border-b border-gray-100">
+                                    <td className="py-2">
+                                        <div className="font-bold">{item.name}</div>
+                                        <div className="text-xs text-gray-400">#{item.barcode}</div>
+                                    </td>
+                                    <td className={`py-2 text-right font-bold ${item.stock <= 0 ? 'text-red-600' : ''}`}>{item.stock}</td>
+                                    <td className="py-2 text-right text-gray-600">{item.minStock}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             {/* Low Stock Modal */}
             {showLowStockModal && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
                         {/* Header */}
-                        <div className="p-4 md:p-6 border-b border-slate-100 flex items-center justify-between bg-amber-50 flex-shrink-0">
-                            <h3 className="font-bold text-amber-800 flex items-center gap-2">
+                        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-amber-50 flex-shrink-0">
+                            <h3 className="font-bold text-amber-900 flex items-center gap-2">
                                 <AlertTriangle className="w-5 h-5" />
-                                {t('dashboard.lowStockAlerts')} ({lowStockItems.length})
+                                <span className="truncate">{t('dashboard.lowStockAlerts')} ({lowStockItems.length})</span>
                             </h3>
                             <button
                                 onClick={() => setShowLowStockModal(false)}
-                                className="w-8 h-8 rounded-full bg-white text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors shadow-sm"
+                                className="w-8 h-8 rounded-full bg-white/50 hover:bg-white text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors"
                             >
-                                ✕
+                                <span className="text-xl leading-none">&times;</span>
                             </button>
                         </div>
 
-                        {/* Printable Content Area */}
-                        <div className="flex-1 overflow-y-auto p-0">
-                            <div ref={printRef} className="p-4 md:p-6 bg-white print:p-8">
-                                {/* Print Only Header */}
-                                <div className="hidden print:block mb-6 border-b pb-4">
-                                    <h1 className="text-2xl font-bold text-slate-800 mb-2">Low Stock Report</h1>
-                                    <p className="text-sm text-slate-500">
-                                        Date: {new Date().toLocaleString()}
-                                    </p>
-                                    <p className="text-sm text-slate-500">
-                                        Items Count: {lowStockItems.length}
-                                    </p>
+                        {/* Content Area */}
+                        <div className="flex-1 overflow-y-auto p-0 scrollable">
+                            {lowStockItems.length === 0 ? (
+                                <div className="p-10 text-center text-slate-400 flex flex-col items-center">
+                                    <Package className="w-12 h-12 mb-2 opacity-20" />
+                                    <p>No low stock items.</p>
                                 </div>
-
-                                {lowStockItems.length === 0 ? (
-                                    <div className="p-8 text-center text-slate-500">No items are low in stock.</div>
-                                ) : (
-                                    <div className="divide-y divide-slate-100">
-                                        {lowStockItems.map((item, idx) => (
-                                            <div key={idx} className="py-3 flex items-center justify-between">
-                                                <div>
-                                                    <p className="font-semibold text-slate-800 text-sm md:text-base">{item.name || 'Unknown Product'}</p>
-                                                    <p className="text-xs text-slate-400 font-mono">#{item.barcode}</p>
-                                                    {parseInt(item.stock) === 0 && (
-                                                        <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-600 border border-red-200">
-                                                            OUT OF STOCK
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="text-right flex items-center gap-4">
-                                                    <div>
-                                                        <span className="block text-xs text-slate-400 uppercase tracking-wide">Stock</span>
-                                                        <span className={`font-bold ${item.stock <= 0 ? 'text-red-600' : 'text-amber-600'}`}>
-                                                            {item.stock}
-                                                        </span>
-                                                    </div>
-                                                    <div className="print:hidden h-8 w-px bg-slate-100 mx-1"></div>
-                                                    <div>
-                                                        <span className="block text-xs text-slate-400 uppercase tracking-wide">Min</span>
-                                                        <span className="font-medium text-slate-600">{item.minStock}</span>
-                                                    </div>
-                                                </div>
+                            ) : (
+                                <div className="divide-y divide-slate-100">
+                                    {lowStockItems.map((item, idx) => (
+                                        <div key={idx} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                                            <div className="min-w-0 pr-4">
+                                                <p className="font-semibold text-slate-800 text-sm truncate">{item.name || 'Unknown'}</p>
+                                                <p className="text-xs text-slate-400 font-mono">#{item.barcode}</p>
                                             </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                                            <div className="text-right flex-shrink-0">
+                                                <div className="flex items-baseline justify-end gap-1">
+                                                    <span className={`text-lg font-bold ${item.stock <= 0 ? 'text-red-600' : 'text-amber-600'}`}>
+                                                        {item.stock}
+                                                    </span>
+                                                    <span className="text-xs text-slate-400">/ {item.minStock}</span>
+                                                </div>
+                                                {parseInt(item.stock) === 0 && (
+                                                    <span className="inline-block text-[9px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded border border-red-100">EMPTY</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         {/* Footer Actions */}
-                        <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center flex-shrink-0">
-                            <p className="text-xs text-slate-400 hidden md:block">
-                                Print this list to perform manual restocking.
-                            </p>
-                            <div className="flex gap-2 w-full md:w-auto">
+                        <div className="p-3 border-t border-slate-100 bg-slate-50 flex flex-col gap-2 flex-shrink-0">
+                            <div className="grid grid-cols-2 gap-2">
                                 <button
                                     onClick={() => {
-                                        // 1. Convert to CSV
                                         const headers = ['Barcode', 'Product Name', 'Category', 'Current Stock', 'Min Stock', 'Price', 'Value'];
                                         const csvContent = [
                                             headers.join(','),
                                             ...lowStockItems.map(item => [
-                                                `"${String(item.barcode).replace(/"/g, '""')}"`, // Handle quotes in data
+                                                `"${String(item.barcode).replace(/"/g, '""')}"`,
                                                 `"${String(item.name).replace(/"/g, '""')}"`,
                                                 `"${String(item.category || '').replace(/"/g, '""')}"`,
                                                 item.stock,
@@ -258,33 +269,34 @@ const Home = () => {
                                             ].join(','))
                                         ].join('\n');
 
-                                        // 2. Create Blob and Download
-                                        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' }); // Add BOM for Excel UTF-8
+                                        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
                                         const url = URL.createObjectURL(blob);
                                         const link = document.createElement('a');
                                         link.setAttribute('href', url);
-                                        link.setAttribute('download', `Low_Stock_Report_${new Date().toISOString().split('T')[0]}.csv`);
+                                        link.setAttribute('download', `Low_Stock_${new Date().toISOString().split('T')[0]}.csv`);
                                         document.body.appendChild(link);
                                         link.click();
                                         document.body.removeChild(link);
                                     }}
-                                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-green-600 border border-green-700 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-all shadow-sm"
+                                    className="flex items-center justify-center gap-2 px-3 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold active:scale-95 transition-all shadow-sm"
                                 >
-                                    <FileSpreadsheet className="w-4 h-4" /> Export Excel
+                                    <FileSpreadsheet className="w-4 h-4" />
+                                    <span>Excel</span>
                                 </button>
                                 <button
                                     onClick={handlePrint}
-                                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
+                                    className="flex items-center justify-center gap-2 px-3 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold active:scale-95 transition-all shadow-sm"
                                 >
-                                    <Printer className="w-4 h-4" /> Print
-                                </button>
-                                <button
-                                    onClick={() => setShowLowStockModal(false)}
-                                    className="flex-1 md:flex-none px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-slate-800 shadow-md"
-                                >
-                                    Close
+                                    <Printer className="w-4 h-4" />
+                                    <span>Print</span>
                                 </button>
                             </div>
+                            <button
+                                onClick={() => setShowLowStockModal(false)}
+                                className="w-full py-2.5 bg-slate-800 text-white rounded-lg text-sm font-bold active:scale-95 transition-all"
+                            >
+                                Close
+                            </button>
                         </div>
                     </div>
                 </div>
