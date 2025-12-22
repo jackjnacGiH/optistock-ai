@@ -173,14 +173,6 @@ const ScanPage = () => {
         }
     };
 
-    const handleRemoveImage = () => {
-        setSelectedImage(null);
-        setImagePreview(null);
-        setUploadedImageUrl(null);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-        }
-    };
 
     const handleSubmit = async () => {
         if (!product) return;
@@ -380,7 +372,7 @@ const ScanPage = () => {
                         disabled={loading}
                         className="w-full bg-primary hover:bg-blue-700 text-white font-bold py-3 md:py-4 rounded-xl shadow-lg shadow-blue-200 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform text-sm md:text-base"
                     >
-                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                        {loading && <Loader2 className="w-5 h-5 animate-spin" />}
                         {t('scan.confirm')} {adjType}
                     </button>
                 </div>
