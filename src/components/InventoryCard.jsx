@@ -27,23 +27,27 @@ const InventoryCard = ({ product }) => {
     return (
         <>
             <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                <div className="aspect-video w-full bg-slate-100 relative">
-                    <img
-                        src={imageUrl}
-                        alt={name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                            e.target.src = "https://placehold.co/600x400/png?text=No+Image"
-                        }}
-                    />
-                    <div className="absolute top-2 right-2">
+                {/* Header Branding instead of Image */}
+                <div className="w-full bg-gradient-to-r from-slate-900 to-slate-800 p-6 flex flex-col items-center justify-center relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-10">
+                        <Package className="w-24 h-24 text-white transform rotate-12 translate-x-4 -translate-y-4" />
+                    </div>
+
+                    <div className="z-10 text-center">
+                        <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300 tracking-tight">
+                            OptiStock AI
+                        </h2>
+                        <p className="text-slate-400 text-xs font-medium tracking-wide uppercase mt-1">Intelligent Inventory</p>
+                    </div>
+
+                    <div className="absolute top-3 right-3 z-20">
                         {isLowStock ? (
-                            <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-bold shadow-sm">
+                            <span className="inline-flex items-center gap-1 bg-red-500/20 text-red-200 border border-red-500/30 px-3 py-1 rounded-full text-xs font-bold shadow-sm backdrop-blur-sm">
                                 <AlertTriangle className="w-3 h-3" /> Low Stock
                             </span>
                         ) : (
-                            <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold shadow-sm">
-                                <CheckCircle2 className="w-3 h-3" /> Good
+                            <span className="inline-flex items-center gap-1 bg-green-500/20 text-green-200 border border-green-500/30 px-3 py-1 rounded-full text-xs font-bold shadow-sm backdrop-blur-sm">
+                                <CheckCircle2 className="w-3 h-3" /> Good Status
                             </span>
                         )}
                     </div>

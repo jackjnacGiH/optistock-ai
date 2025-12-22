@@ -196,7 +196,7 @@ const ScanPage = () => {
 
     if (view === 'RESULT' && product) {
         return (
-            <div className="space-y-4 md:space-y-6 max-w-lg mx-auto animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="space-y-4 md:space-y-6 max-w-xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-300">
                 <button onClick={handleReset} className="flex items-center text-slate-500 hover:text-slate-800 text-sm font-medium">
                     <ArrowLeft className="w-4 h-4 mr-1" /> {t('scan.backToScanner')}
                 </button>
@@ -285,7 +285,7 @@ const ScanPage = () => {
     }
 
     return (
-        <div className="space-y-4 md:space-y-6 max-w-lg mx-auto">
+        <div className="space-y-4 md:space-y-6 max-w-xl mx-auto">
             <div className="text-center mb-2 md:mb-4">
                 <h2 className="text-xl md:text-2xl font-bold text-slate-800">{t('scan.title')}</h2>
                 <p className="text-sm md:text-base text-slate-500">{t('scan.subtitle')}</p>

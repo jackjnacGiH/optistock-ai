@@ -95,7 +95,7 @@ const Scanner = ({ onScanSuccess }) => {
             </div>
 
             {/* Scan Area */}
-            <div className="relative aspect-square bg-black rounded-2xl overflow-hidden shadow-lg border-2 border-slate-800 mb-4">
+            <div className="relative aspect-[2/1] bg-black rounded-2xl overflow-hidden shadow-lg border-2 border-slate-800 mb-4">
                 <div id="reader" className="w-full h-full"></div>
 
                 {!isScanning && !error && (
