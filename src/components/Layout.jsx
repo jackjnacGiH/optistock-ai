@@ -81,7 +81,11 @@ const Layout = () => {
                 <NavItem to="/ai-analysis" icon={Brain} label="AI" active={path === "/ai-analysis"} />
 
                 <div className="relative -top-5 mx-2">
-                    <Link to="/scan" className="flex items-center justify-center w-14 h-14 rounded-full bg-primary text-white shadow-lg shadow-primary/30 active:scale-95 transition-transform">
+                    <Link
+                        to="/scan"
+                        onClick={() => window.dispatchEvent(new CustomEvent('reset-scan-view'))}
+                        className="flex items-center justify-center w-14 h-14 rounded-full bg-primary text-white shadow-lg shadow-primary/30 active:scale-95 transition-transform"
+                    >
                         <ScanLine className="w-7 h-7" />
                     </Link>
                 </div>

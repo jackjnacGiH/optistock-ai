@@ -49,6 +49,12 @@ const ScanPage = () => {
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+    // Listen for reset event from Layout
+    useEffect(() => {
+        const handleResetEvent = () => handleReset();
+        window.addEventListener('reset-scan-view', handleResetEvent);
+        return () => window.removeEventListener('reset-scan-view', handleResetEvent);
+    }, []);
 
     // Filter suggestions as user types
     useEffect(() => {
@@ -196,10 +202,8 @@ const ScanPage = () => {
 
     if (view === 'RESULT' && product) {
         return (
-            <div className="space-y-4 md:space-y-6 max-w-xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-300">
-                <button onClick={handleReset} className="flex items-center text-slate-500 hover:text-slate-800 text-sm font-medium">
-                    <ArrowLeft className="w-4 h-4 mr-1" /> {t('scan.backToScanner')}
-                </button>
+            <div className="h-full flex flex-col max-w-xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-300">
+
 
                 <InventoryCard product={product} />
 
