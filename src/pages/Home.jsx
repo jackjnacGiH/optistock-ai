@@ -1,6 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Package, TrendingUp, AlertTriangle, Activity, Printer, FileSpreadsheet } from 'lucide-react';
-import { useReactToPrint } from 'react-to-print';
 import { api } from '../services/api';
 import { useLanguage } from '../i18n/LanguageContext';
 
@@ -100,11 +99,9 @@ const Home = () => {
         </div>
     );
 
-    const printRef = useRef();
-    const handlePrint = useReactToPrint({
-        content: () => printRef.current,
-        documentTitle: `Low_Stock_Report_${new Date().toISOString().split('T')[0]}`,
-    });
+    const handlePrint = () => {
+        window.print();
+    };
 
     return (
         <div className="space-y-4 md:space-y-8 relative">
@@ -168,26 +165,40 @@ const Home = () => {
                 <Package className="absolute -right-10 -bottom-10 w-48 h-48 md:w-64 md:h-64 text-white/5 rotate-12" />
             </div>
 
-            {/* Hidden Printable Component (Must exist in DOM but invisible) */}
-            <div style={{ height: 0, overflow: "hidden" }}>
-                <div ref={printRef} className="p-8 bg-white text-black min-w-[210mm]">
-                    <style type="text/css" media="print">
-                        {`
-                            @media print {
-                                @page { size: A4; margin: 20mm; }
-                                body { -webkit-print-color-adjust: exact; }
-                            }
-                        `}
-                    </style>
-                    <div className="mb-6 border-b border-black/10 pb-4">
+            {/* Print-only Content (Hidden on screen, visible when printing) */}
+            <div id="printable-area" className="print-only" style={{ display: 'none' }}>
+                <style>{`
+                    @media print {
+                        body * {
+                            visibility: hidden;
+                        }
+                        #printable-area,
+                        #printable-area * {
+                            visibility: visible;
+                        }
+                        #printable-area {
+                            position: absolute;
+                            left: 0;
+                            top: 0;
+                            width: 100%;
+                            display: block !important;
+                        }
+                        @page {
+                            size: A4;
+                            margin: 20mm;
+                        }
+                    }
+                `}</style>
+                <div className="p-8 bg-white text-black">
+                    <div className="mb-6 border-b-2 border-black pb-4">
                         <div className="flex justify-between items-start">
                             <div>
                                 <h1 className="text-2xl font-bold text-black mb-1">Low Stock Report</h1>
-                                <p className="text-sm text-gray-500">OptiStock AI Inventory System</p>
+                                <p className="text-sm text-gray-600">OptiStock AI Inventory System</p>
                             </div>
                             <div className="text-right">
-                                <p className="text-sm text-gray-500">Date: {new Date().toLocaleDateString('th-TH')}</p>
-                                <p className="text-sm text-gray-500">Items: {lowStockItems.length}</p>
+                                <p className="text-sm text-gray-600">Date: {new Date().toLocaleDateString('th-TH')}</p>
+                                <p className="text-sm text-gray-600">Total Items: {lowStockItems.length}</p>
                             </div>
                         </div>
                     </div>
@@ -195,24 +206,27 @@ const Home = () => {
                         <thead>
                             <tr className="border-b-2 border-black">
                                 <th className="py-2 font-bold text-black">Item Name</th>
-                                <th className="py-2 font-bold text-black text-right w-24">Barcode</th>
+                                <th className="py-2 font-bold text-black text-right w-32">Barcode</th>
                                 <th className="py-2 font-bold text-black text-right w-20">Stock</th>
                                 <th className="py-2 font-bold text-black text-right w-20">Min</th>
                             </tr>
                         </thead>
                         <tbody>
                             {lowStockItems.map((item, idx) => (
-                                <tr key={idx} className="border-b border-gray-200 break-inside-avoid">
-                                    <td className="py-3 pr-2 align-top">
+                                <tr key={idx} className="border-b border-gray-300" style={{ pageBreakInside: 'avoid' }}>
+                                    <td className="py-2 pr-2">
                                         <div className="font-medium text-black">{item.name || 'Unknown Product'}</div>
                                     </td>
-                                    <td className="py-3 text-right font-mono text-sm text-gray-600 align-top">{item.barcode}</td>
-                                    <td className={`py-3 text-right font-bold align-top ${item.stock <= 0 ? 'text-red-600' : 'text-black'}`}>{item.stock}</td>
-                                    <td className="py-3 text-right text-gray-600 align-top">{item.minStock}</td>
+                                    <td className="py-2 text-right font-mono text-sm text-gray-700">{item.barcode}</td>
+                                    <td className={`py-2 text-right font-bold ${item.stock <= 0 ? 'text-red-600' : 'text-black'}`}>{item.stock}</td>
+                                    <td className="py-2 text-right text-gray-700">{item.minStock}</td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
+                    <div className="mt-8 pt-4 border-t border-gray-300 text-xs text-gray-500">
+                        <p>Generated by OptiStock AI - {new Date().toLocaleString('th-TH')}</p>
+                    </div>
                 </div>
             </div>
 
