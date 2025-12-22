@@ -53,11 +53,16 @@ const Home = () => {
 
                 // Filter Low Stock Items (Valid entries only)
                 const lowStockList = validInventory.filter(i => {
-                    const stock = parseInt(i.stock) || 0;
-                    const min = parseInt(i.minStock) || 0;
+                    const stock = parseInt(i.stock);
+                    const min = parseInt(i.minStock);
 
-                    // Logic: Stock is low IF it is less/equal to min
-                    return stock <= min;
+                    // Skip if stock or minStock is invalid (NaN, 0, negative, or empty)
+                    if (isNaN(stock) || isNaN(min) || min <= 0) {
+                        return false;
+                    }
+
+                    // Show only items where stock is positive but less than or equal to minStock
+                    return stock > 0 && stock <= min;
                 });
 
                 const lowStockCount = lowStockList.length;
