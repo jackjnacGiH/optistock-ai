@@ -147,14 +147,18 @@ const BarcodePrintModal = ({ isOpen, onClose, product, barcode }) => {
                         </div>
                         <div style={{
                             textAlign: 'center',
-                            fontSize: '9px',
+                            fontSize: '8px',
                             fontWeight: 'bold',
                             width: '100%',
-                            lineHeight: '1',
-                            marginTop: '1px',
-                            whiteSpace: 'nowrap',
+                            lineHeight: '1.2',
+                            marginTop: '2px',
+                            wordWrap: 'break-word',
+                            whiteSpace: 'normal',
                             overflow: 'hidden',
-                            textOverflow: 'ellipsis'
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            maxHeight: '16px'
                         }}>
                             {product.name}
                         </div>
@@ -190,7 +194,15 @@ const BarcodePrintModal = ({ isOpen, onClose, product, barcode }) => {
                             >
                                 <div className="w-full h-full flex flex-col items-center justify-center overflow-hidden">
                                     <svg ref={previewBarcodeRef} className="max-w-full max-h-full"></svg>
-                                    <div className="w-full text-center text-[10px] font-bold mt-1 line-clamp-1">
+                                    <div className="w-full text-center text-[8px] font-bold mt-1 px-1 leading-tight"
+                                        style={{
+                                            display: '-webkit-box',
+                                            WebkitLineClamp: 2,
+                                            WebkitBoxOrient: 'vertical',
+                                            overflow: 'hidden',
+                                            wordWrap: 'break-word',
+                                            lineHeight: '1.2'
+                                        }}>
                                         {product.name}
                                     </div>
                                 </div>
