@@ -229,8 +229,10 @@ const Home = () => {
                         <tbody>
                             {lowStockItems.map((item, idx) => (
                                 <tr key={idx} className="border-b border-gray-300" style={{ pageBreakInside: 'avoid' }}>
-                                    <td className="py-2 pr-2">
-                                        <div className="font-medium text-black">{item.name || 'Unknown Product'}</div>
+                                    <td className="py-2 pr-2" style={{ maxWidth: '250px' }}>
+                                        <div className="font-medium text-black" style={{ wordWrap: 'break-word', whiteSpace: 'normal', lineHeight: '1.4' }}>
+                                            {item.name || 'Unknown Product'}
+                                        </div>
                                     </td>
                                     <td className="py-2 text-right font-mono text-sm text-gray-700">{item.barcode}</td>
                                     <td className={`py-2 text-right font-bold ${item.stock <= 0 ? 'text-red-600' : 'text-black'}`}>{item.stock}</td>
