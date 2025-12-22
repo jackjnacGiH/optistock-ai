@@ -14,6 +14,13 @@ const ScanPage = () => {
     const [manualCode, setManualCode] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // Image Upload States
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
+    const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
+    const fileInputRef = useRef(null);
+
     // Smart Search States
     const [inventoryList, setInventoryList] = useState([]);
     const [suggestions, setSuggestions] = useState([]);
@@ -139,11 +146,54 @@ const ScanPage = () => {
         setShowSuggestions(false);
     };
 
+    // Image Handling Functions
+    const handleImageSelect = (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setSelectedImage(file);
+            // Create preview
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleImageUpload = async () => {
+        if (!selectedImage || !product) return;
+
+        setUploadingImage(true);
+        try {
+            const response = await api.uploadImage(selectedImage, product.barcode);
+            if (response.success) {
+                setUploadedImageUrl(response.imageUrl);
+                alert(language === 'th' ? 'อัปโหลดรูปสำเร็จ!' : 'Image uploaded successfully!');
+            } else {
+                alert(response.error || 'Upload failed');
+            }
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            alert(language === 'th' ? 'เกิดข้อผิดพลาดในการอัปโหลด' : 'Upload error');
+        } finally {
+            setUploadingImage(false);
+        }
+    };
+
+    const handleRemoveImage = () => {
+        setSelectedImage(null);
+        setImagePreview(null);
+        setUploadedImageUrl(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
     const handleSubmit = async () => {
         if (!product) return;
         setLoading(true);
         try {
-            const response = await api.updateStock(product.barcode, amount, adjType);
+            const response = await api.updateStock(product.barcode, amount, adjType, 'WebApp', uploadedImageUrl);
             if (response.success) {
                 alert(response.message || t('scan.stockUpdated'));
 
@@ -154,7 +204,8 @@ const ScanPage = () => {
                             ...item,
                             stock: adjType === 'IN'
                                 ? parseInt(item.stock) + amount
-                                : parseInt(item.stock) - amount
+                                : parseInt(item.stock) - amount,
+                            imageUrl: uploadedImageUrl || item.imageUrl // Update image if uploaded
                         };
                     }
                     return item;
@@ -180,6 +231,8 @@ const ScanPage = () => {
         setAmount(0); // Default to 0 as requested
         setManualCode('');
         setSuggestions([]);
+        // Reset image states
+        handleRemoveImage();
     };
 
     if (view === 'LOADING') {
@@ -266,12 +319,70 @@ const ScanPage = () => {
                         </div>
                     </div>
 
-                    {/* Optional Image Upload Placeholder */}
-                    <div className="mb-4 md:mb-6 p-3 md:p-4 border border-dashed border-slate-300 rounded-lg text-center bg-slate-50">
-                        <button className="flex flex-col items-center justify-center w-full text-slate-400 hover:text-slate-600">
-                            <Camera className="w-5 h-5 md:w-6 md:h-6 mb-1 md:mb-2" />
-                            <span className="text-xs">{t('scan.attachPhoto')}</span>
-                        </button>
+                    {/* Image Upload Section */}
+                    <div className="mb-4 md:mb-6">
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            onChange={handleImageSelect}
+                            className="hidden"
+                        />
+
+                        {!imagePreview ? (
+                            <div className="p-3 md:p-4 border border-dashed border-slate-300 rounded-lg text-center bg-slate-50">
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="flex flex-col items-center justify-center w-full text-slate-400 hover:text-slate-600 transition-colors"
+                                >
+                                    <Camera className="w-5 h-5 md:w-6 md:h-6 mb-1 md:mb-2" />
+                                    <span className="text-xs">{t('scan.attachPhoto')}</span>
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="relative">
+                                <img
+                                    src={imagePreview}
+                                    alt="Preview"
+                                    className="w-full h-48 object-cover rounded-lg border-2 border-slate-200"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleRemoveImage}
+                                    className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 shadow-lg"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                                {!uploadedImageUrl && (
+                                    <button
+                                        type="button"
+                                        onClick={handleImageUpload}
+                                        disabled={uploadingImage}
+                                        className="mt-2 w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                                    >
+                                        {uploadingImage ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                {language === 'th' ? 'กำลังอัปโหลด...' : 'Uploading...'}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Save className="w-4 h-4" />
+                                                {language === 'th' ? 'อัปโหลดรูป' : 'Upload Image'}
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+                                {uploadedImageUrl && (
+                                    <div className="mt-2 text-center text-green-600 text-sm font-semibold flex items-center justify-center gap-1">
+                                        <span>✓</span>
+                                        <span>{language === 'th' ? 'อัปโหลดสำเร็จ' : 'Uploaded'}</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     <button

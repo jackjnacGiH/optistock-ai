@@ -206,36 +206,36 @@ export const api = {
     /**
      * Upload image to Google Drive
      */
-    uploadImage: async (imageFile) => {
+    uploadImage: async (imageFile, barcode) => {
         if (USE_MOCK) {
             console.log('[MOCK] Upload image:', imageFile.name);
             return new Promise((resolve) => {
                 setTimeout(() => resolve({
                     success: true,
                     imageUrl: 'https://via.placeholder.com/300',
-                    fileId: 'mock_file_id'
                 }), 1000);
             });
         }
 
         try {
-            // Convert image to base64
+            // Convert to Base64
             const base64 = await new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
+                reader.onload = () => resolve(reader.result); // Contains data:image/jpeg;base64,...
                 reader.onerror = reject;
                 reader.readAsDataURL(imageFile);
             });
 
-            const params = new URLSearchParams({
-                action: 'uploadImage',
-                imageData: base64,
-                fileName: imageFile.name
-            });
+            // Use URLSearchParams for the Body to act as Form Data
+            const formData = new URLSearchParams();
+            formData.append('action', 'uploadImage');
+            formData.append('imageData', base64);
+            formData.append('barcode', barcode || '');
 
-            const response = await fetch(`${API_URL}?${params.toString()}`, {
+            // Send as POST Body
+            const response = await fetch(API_URL, {
                 method: 'POST',
-                redirect: 'follow'
+                body: formData
             });
 
             const data = await response.json();

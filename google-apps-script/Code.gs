@@ -106,12 +106,13 @@ function handleRequest(e) {
     switch (action) {
       case 'getInventory': return jsonResponse(getInventory());
       case 'getHistory': return jsonResponse(getHistory(e.parameter.startDate));
-      case 'updateStock': return jsonResponse(updateStock(e.parameter.barcode, parseInt(e.parameter.amount), e.parameter.type));
+      case 'updateStock': return jsonResponse(updateStock(e.parameter.barcode, parseInt(e.parameter.amount), e.parameter.type, e.parameter.imageUrl));
       case 'addProduct': return jsonResponse(addProduct(JSON.parse(e.parameter.productData)));
       case 'bulkUpdateMinStock': return jsonResponse(bulkUpdateMinStock(JSON.parse(e.parameter.updates)));
       case 'saveReport': return jsonResponse(generateReport(e.parameter.note));
       case 'clearHistory': return jsonResponse(clearHistory());
-      case 'debug': return jsonResponse({ success: true, message: 'Backend v2.2 (Date Filter) Ready!' });
+      case 'uploadImage': return jsonResponse(uploadImage(e.parameter.imageData, e.parameter.barcode));
+      case 'debug': return jsonResponse({ success: true, message: 'Backend v2.3 (Image Upload) Ready!' });
       default: return jsonResponse({ success: false, error: 'Invalid action' });
     }
   } catch (error) {
@@ -308,7 +309,8 @@ function getHistory() {
   }));
 }
 
-function updateStock(barcode, amount, type) {
+
+function updateStock(barcode, amount, type, newImageUrl = null) {
   const sheet = getOrCreateSheet(SHEET_NAMES.INVENTORY);
   const data = sheet.getDataRange().getValues();
   const map = getColumnMap(sheet, 'INVENTORY');
@@ -339,6 +341,12 @@ function updateStock(barcode, amount, type) {
   if (map.lastUpdated !== undefined) {
     sheet.getRange(rowIndex, map.lastUpdated + 1).setValue(new Date());
   }
+  
+  // Update Image URL if provided
+  if (newImageUrl && map.imageUrl !== undefined) {
+    sheet.getRange(rowIndex, map.imageUrl + 1).setValue(newImageUrl);
+    imageUrl = newImageUrl; // Update for history record
+  }
 
   // Record History (ใช้ Smart Row Builder)
   const historySheet = getOrCreateSheet(SHEET_NAMES.HISTORY);
@@ -352,7 +360,7 @@ function updateStock(barcode, amount, type) {
     amount: amount,
     prevStock: currentStock,
     newStock: newStock,
-    user: 'WebApp', // หรือรับจาก parameter userId
+    user: 'WebApp',
     image: imageUrl
   };
 
@@ -394,6 +402,35 @@ function bulkUpdateMinStock(updates) {
   });
   
   return { success: true, message: 'Bulk update success' };
+}
+
+function uploadImage(base64Data, barcode) {
+  try {
+    if (!base64Data) return { success: false, error: 'No image data provided' };
+    
+    // Decode Base64
+    const splitBase64 = base64Data.split(',');
+    const encodedData = splitBase64.length > 1 ? splitBase64[1] : splitBase64[0];
+    const decodedBlob = Utilities.base64Decode(encodedData);
+    
+    // Create Blob
+    const fileName = `product_${barcode || 'unknown'}_${new Date().getTime()}.jpg`;
+    const blob = Utilities.newBlob(decodedBlob, 'image/jpeg', fileName);
+    
+    // Save to Drive (Folder: OptiStock_Product_Images)
+    const folders = DriveApp.getFoldersByName('OptiStock_Product_Images');
+    let folder = folders.hasNext() ? folders.next() : DriveApp.createFolder('OptiStock_Product_Images');
+    
+    const file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    
+    // Construct Direct Link
+    const imageUrl = `https://drive.google.com/uc?export=view&id=${file.getId()}`;
+    
+    return { success: true, imageUrl: imageUrl, message: 'Image uploaded successfully' };
+  } catch (e) {
+    return { success: false, error: e.toString() };
+  }
 }
 
 // --- Utils ---
