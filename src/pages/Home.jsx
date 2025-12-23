@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Package, TrendingUp, AlertTriangle, Activity, Printer, FileSpreadsheet } from 'lucide-react';
 import { api } from '../services/api';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -173,9 +174,13 @@ const Home = () => {
                 <div className="relative z-10">
                     <h2 className="text-lg md:text-2xl font-bold mb-2 md:mb-4">{t('dashboard.readyTitle')}</h2>
                     <p className="text-sm md:text-base text-slate-300 max-w-xl mb-4 md:mb-6">{t('dashboard.readyDesc')}</p>
-                    <a href="/scan" className="inline-block bg-white text-slate-900 font-bold px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-slate-100 transition-colors text-sm md:text-base">
+                    <Link
+                        to="/scan"
+                        state={{ reset: true }}
+                        className="inline-block bg-white text-slate-900 font-bold px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-slate-100 transition-colors text-sm md:text-base"
+                    >
                         {t('dashboard.startScanning')}
-                    </a>
+                    </Link>
                 </div>
                 <Package className="absolute -right-10 -bottom-10 w-48 h-48 md:w-64 md:h-64 text-white/5 rotate-12" />
             </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Search, Plus, Minus, ArrowLeft, Loader2, X } from 'lucide-react';
 import Scanner from '../components/ScannerNew';
 import InventoryCard from '../components/InventoryCard';
@@ -22,6 +23,7 @@ const ScanPage = () => {
     const searchRef = useRef(null);
 
     const { t, language } = useLanguage();
+    const location = useLocation();
 
     // Fetch full inventory on mount for smart search
     useEffect(() => {
@@ -69,6 +71,14 @@ const ScanPage = () => {
         setShowSuggestions(true);
     }, [manualCode, inventoryList]);
 
+    // Reset when navigating from dashboard
+    useEffect(() => {
+        if (location.state?.reset) {
+            handleReset();
+            // Clear the state to prevent reset on subsequent renders
+            window.history.replaceState({}, document.title);
+        }
+    }, [location]);
 
     // Handle successful scan
     const handleScan = async (code) => {
