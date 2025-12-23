@@ -170,7 +170,8 @@ const ScanPage = () => {
         try {
             const response = await api.updateStock(product.barcode, amount, adjType);
             if (response.success) {
-                alert(response.message || t('scan.stockUpdated'));
+                // Log success message instead of alert
+                console.log('✅', response.message || t('scan.stockUpdated'));
 
                 // Update local inventory state to reflect change immediately
                 const updatedList = inventoryList.map(item => {
@@ -186,6 +187,7 @@ const ScanPage = () => {
                 });
                 setInventoryList(updatedList);
 
+                // Immediately return to scan view
                 handleReset();
             } else {
                 alert(response.error || t('scan.failedUpdate'));
