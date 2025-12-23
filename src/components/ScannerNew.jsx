@@ -234,7 +234,23 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
 
             <div id="qr-reader-file" style={{ display: 'none' }}></div>
 
-
+            <style>{`
+                /* Hide all library-generated borders, lines, and guides */
+                #qr-reader div, 
+                #qr-reader span,
+                #qr-reader__scan_region div {
+                    border: none !important;
+                    box-shadow: none !important;
+                    background: transparent !important;
+                }
+                
+                /* Ensure only the video remains visible */
+                #qr-reader video {
+                    width: 100% !important;
+                    height: 100% !important;
+                    object-fit: cover !important;
+                }
+            `}</style>
         </div>
     );
 };
