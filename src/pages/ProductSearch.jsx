@@ -172,7 +172,7 @@ const ProductSearch = () => {
                 <div className="text-center mb-4">
                     <h2 className="text-xl font-bold text-slate-800">{language === 'th' ? 'สแกนสินค้า' : 'Scan Product'}</h2>
                 </div>
-                <Scanner key={scannerKey} onScanSuccess={handleScanSuccess} autoStart={true} />
+                <Scanner key={scannerKey} onScanSuccess={handleScanSuccess} />
             </div>
         );
     }
