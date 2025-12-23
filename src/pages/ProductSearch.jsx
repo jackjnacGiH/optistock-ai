@@ -141,7 +141,8 @@ const ProductSearch = () => {
             setView('RESULT');
         } else {
             alert(`${t('scan.productNotFound')}: ${scannedCode}`);
-            setView('SEARCH');
+            // Force reset scanner state and return to search
+            handleReset();
         }
     };
 
