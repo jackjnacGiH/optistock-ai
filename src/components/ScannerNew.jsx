@@ -118,9 +118,7 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
                     stopScanner();
 
                     // Add a tiny delay to ensure validity/feel confident
-                    setTimeout(() => {
-                        onScanSuccessRef.current(decodedText);
-                    }, 500); // Wait 0.5s before processing
+                    onScanSuccessRef.current(decodedText);
                 },
                 (errorMessage) => {
                     // Ignore errors during live scan

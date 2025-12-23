@@ -131,59 +131,78 @@ const ProductSearch = () => {
         }
     };
 
-    const handleScanSuccess = (code) => {
-        if (isProcessing) return; // Ignore if already processing a scan
-        setIsProcessing(true);
-
+    // Reusable search logic
+    const findProductInList = (list, code) => {
         const scannedCode = String(code).trim();
-        console.log(`Scan Processing: Received code "${scannedCode}"`);
-
-        // Helper to normalize logic
         const normalize = (str) => String(str || '').trim().toLowerCase();
 
-        // 1. Exact Match (String)
-        let found = inventoryList.find(i => normalize(i.barcode) === normalize(scannedCode));
+        // 1. Exact Match
+        let found = list.find(i => normalize(i.barcode) === normalize(scannedCode));
 
-        // 2. Numeric Match (Fix for "00123" vs "123")
+        // 2. Numeric Match
         if (!found && !isNaN(scannedCode)) {
             const scannedNum = Number(scannedCode);
-            found = inventoryList.find(i => {
+            found = list.find(i => {
                 const itemBarcode = i.barcode;
                 if (!itemBarcode) return false;
-                // If the inventory item is numeric-like, compare numbers
                 if (!isNaN(itemBarcode)) {
                     return Number(itemBarcode) === scannedNum;
                 }
                 return false;
             });
-            if (found) console.log(`Match found via Numeric comparison: ${found.barcode}`);
         }
 
-        // 3. Relaxed Includes Match (Last Resort)
-        // If the scanned code is contained within the inventory barcode OR vice versa
-        // AND the length difference isn't too huge (to avoid "1" matching "1005")
+        // 3. Relaxed Includes Match
         if (!found) {
-            found = inventoryList.find(i => {
+            found = list.find(i => {
                 const dbCode = normalize(i.barcode);
                 const scan = normalize(scannedCode);
                 if (!dbCode || !scan) return false;
-
                 return dbCode === scan || (dbCode.includes(scan) && dbCode.length - scan.length < 3) || (scan.includes(dbCode));
             });
-            if (found) console.log(`Match found via Partial/Included comparison: ${found.barcode}`);
+        }
+        return found;
+    };
+
+    const handleScanSuccess = async (code) => {
+        if (isProcessing) return;
+        setIsProcessing(true);
+
+        const scannedCode = String(code).trim();
+        console.log(`Scan Processing: Received code "${scannedCode}"`);
+
+        // Attempt 1: Search in current list
+        let found = findProductInList(inventoryList, scannedCode);
+
+        // Attempt 2: If not found, fetch latest data and search again
+        if (!found) {
+            console.log("Not found locally. Fetching latest inventory...");
+            try {
+                // Optional: Show some loading feedback if needed, but for speed we just wait
+                const response = await api.getInventory();
+                let newInventory = [];
+                if (Array.isArray(response)) newInventory = response;
+                else if (response && Array.isArray(response.data)) newInventory = response.data;
+
+                // Update state
+                setInventoryList(newInventory);
+
+                // Search again in new list
+                found = findProductInList(newInventory, scannedCode);
+            } catch (error) {
+                console.error("Failed to refresh inventory:", error);
+            }
         }
 
         if (found) {
+            console.log(`Match found: ${found.barcode}`);
             setSelectedProduct(found);
             setView('RESULT');
-            setIsProcessing(false); // Unlock for next time
+            setIsProcessing(false);
         } else {
-            // REPLACE ALERT WITH MODAL
-            // We do NOT call handleReset() immediately here.
-            // We set the modal state, and the modal close action will call handleReset().
+            console.log("Product definitely not found.");
             setNotFoundCode(scannedCode);
             setShowNotFoundModal(true);
-            // Don't reset view yet, let the modal overlay the scanner or whatever view is active
         }
     };
 
