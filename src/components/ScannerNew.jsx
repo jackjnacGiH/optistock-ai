@@ -113,8 +113,14 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
                     ]
                 },
                 (decodedText) => {
+                    // Simple Debounce / Verification Logic
+                    // Stop scanning immediately to prevent duplicate reads
                     stopScanner();
-                    onScanSuccessRef.current(decodedText);
+
+                    // Add a tiny delay to ensure validity/feel confident
+                    setTimeout(() => {
+                        onScanSuccessRef.current(decodedText);
+                    }, 500); // Wait 0.5s before processing
                 },
                 (errorMessage) => {
                     // Ignore errors during live scan
