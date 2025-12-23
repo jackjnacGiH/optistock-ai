@@ -136,34 +136,41 @@ const ProductSearch = () => {
         setIsProcessing(true);
 
         const scannedCode = String(code).trim();
+        console.log(`Scan Processing: Received code "${scannedCode}"`);
 
-        // Strategy 1: Exact String Match (Case Insensitive)
-        let found = inventoryList.find(i =>
-            String(i.barcode || '').trim().toLowerCase() === scannedCode.toLowerCase()
-        );
+        // Helper to normalize logic
+        const normalize = (str) => String(str || '').trim().toLowerCase();
 
-        // ... (Strategy 2 & 3 logic remains SAME, omitted for brevity but preserved in mind) ...
-        // Strategy 2: Numeric Match (Handles leading zeros e.g., "00123" vs "123")
+        // 1. Exact Match (String)
+        let found = inventoryList.find(i => normalize(i.barcode) === normalize(scannedCode));
+
+        // 2. Numeric Match (Fix for "00123" vs "123")
         if (!found && !isNaN(scannedCode)) {
-            try {
-                const scannedNum = Number(scannedCode);
-                found = inventoryList.find(i => {
-                    const itemBarcode = i.barcode;
-                    // Skip text barcodes
-                    if (!itemBarcode || isNaN(itemBarcode)) return false;
+            const scannedNum = Number(scannedCode);
+            found = inventoryList.find(i => {
+                const itemBarcode = i.barcode;
+                if (!itemBarcode) return false;
+                // If the inventory item is numeric-like, compare numbers
+                if (!isNaN(itemBarcode)) {
                     return Number(itemBarcode) === scannedNum;
-                });
-            } catch (e) { console.warn("Numeric comparison failed", e); }
+                }
+                return false;
+            });
+            if (found) console.log(`Match found via Numeric comparison: ${found.barcode}`);
         }
-        // Strategy 3: Partial Match
+
+        // 3. Relaxed Includes Match (Last Resort)
+        // If the scanned code is contained within the inventory barcode OR vice versa
+        // AND the length difference isn't too huge (to avoid "1" matching "1005")
         if (!found) {
             found = inventoryList.find(i => {
-                const barcode = String(i.barcode || '').toLowerCase();
-                // If barcode is empty, skip
-                if (!barcode) return false;
-                const search = scannedCode.toLowerCase();
-                return barcode.includes(search) || search.includes(barcode);
+                const dbCode = normalize(i.barcode);
+                const scan = normalize(scannedCode);
+                if (!dbCode || !scan) return false;
+
+                return dbCode === scan || (dbCode.includes(scan) && dbCode.length - scan.length < 3) || (scan.includes(dbCode));
             });
+            if (found) console.log(`Match found via Partial/Included comparison: ${found.barcode}`);
         }
 
         if (found) {
