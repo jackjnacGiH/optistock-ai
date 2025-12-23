@@ -12,13 +12,12 @@ const ProductSearch = () => {
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
-    const [scannerKey, setScannerKey] = useState(0);
-    const [isProcessing, setIsProcessing] = useState(false); // Add processing lock state // For forcing Scanner remount
-    const searchRef = useRef(null);
-    const { t, language } = useLanguage();
+    const [showNotFoundModal, setShowNotFoundModal] = useState(false);
+    const [notFoundCode, setNotFoundCode] = useState('');
 
     // Fetch Inventory on Mount
     useEffect(() => {
+        // ... (fetch logic remains same)
         const fetchInventory = async () => {
             try {
                 const response = await api.getInventory();
@@ -41,7 +40,7 @@ const ProductSearch = () => {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Filter Suggestions
+    // ... (Filter Suggestions logic remains same)
     useEffect(() => {
         if (!searchQuery.trim() || inventoryList.length === 0) {
             setSuggestions([]);
@@ -87,7 +86,9 @@ const ProductSearch = () => {
                 setSearchQuery('');
                 setShowSuggestions(false);
             } else {
-                alert(t('scan.productNotFound'));
+                // REPLACE ALERT WITH MODAL
+                setNotFoundCode(term);
+                setShowNotFoundModal(true);
             }
         }
     };
@@ -103,6 +104,7 @@ const ProductSearch = () => {
             String(i.barcode || '').trim().toLowerCase() === scannedCode.toLowerCase()
         );
 
+        // ... (Strategy 2 & 3 logic remains SAME, omitted for brevity but preserved in mind) ...
         // Strategy 2: Numeric Match (Handles leading zeros e.g., "00123" vs "123")
         if (!found && !isNaN(scannedCode)) {
             try {
@@ -113,30 +115,17 @@ const ProductSearch = () => {
                     if (!itemBarcode || isNaN(itemBarcode)) return false;
                     return Number(itemBarcode) === scannedNum;
                 });
-            } catch (e) {
-                console.warn("Numeric comparison failed", e);
-            }
+            } catch (e) { console.warn("Numeric comparison failed", e); }
         }
-
-        // Strategy 3: Partial Match (if still not found)
+        // Strategy 3: Partial Match
         if (!found) {
             found = inventoryList.find(i => {
                 const barcode = String(i.barcode || '').toLowerCase();
+                // If barcode is empty, skip
+                if (!barcode) return false;
                 const search = scannedCode.toLowerCase();
                 return barcode.includes(search) || search.includes(barcode);
             });
-
-            // If found with partial match, ask for confirmation
-            if (found) {
-                const confirm = window.confirm(
-                    language === 'th'
-                        ? `ไม่พบบาร์โค้ดที่ตรงกันทุกตัว\n\nพบสินค้าที่คล้ายกัน:\n${found.name}\nบาร์โค้ด: ${found.barcode}\n\nต้องการใช้สินค้านี้หรือไม่?`
-                        : `Exact match not found\n\nSimilar product found:\n${found.name}\nBarcode: ${found.barcode}\n\nUse this product?`
-                );
-                if (!confirm) {
-                    found = null;
-                }
-            }
         }
 
         if (found) {
@@ -144,9 +133,12 @@ const ProductSearch = () => {
             setView('RESULT');
             setIsProcessing(false); // Unlock for next time
         } else {
-            alert(`${t('scan.productNotFound')}: ${scannedCode}`);
-            // Force reset scanner state and return to search
-            handleReset();
+            // REPLACE ALERT WITH MODAL
+            // We do NOT call handleReset() immediately here.
+            // We set the modal state, and the modal close action will call handleReset().
+            setNotFoundCode(scannedCode);
+            setShowNotFoundModal(true);
+            // Don't reset view yet, let the modal overlay the scanner or whatever view is active
         }
     };
 
@@ -156,6 +148,12 @@ const ProductSearch = () => {
         setSelectedProduct(null);
         setSearchQuery('');
         setScannerKey(prev => prev + 1); // Force Scanner remount
+        setShowNotFoundModal(false); // Ensure modal is closed
+    };
+
+    const closeNotFoundModal = () => {
+        setShowNotFoundModal(false);
+        handleReset(); // Go back to search and reset scanner
     };
 
     // --- RENDER ---
@@ -169,9 +167,38 @@ const ProductSearch = () => {
         );
     }
 
+    // RENDER MODAL OVERLAY
+    const NotFoundModal = () => (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full text-center space-y-4 animate-in zoom-in-95 duration-200">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <X className="w-8 h-8 text-red-500" />
+                </div>
+                <div>
+                    <h3 className="text-xl font-bold text-slate-800 mb-2">
+                        {language === 'th' ? 'ไม่พบสินค้า' : 'Product Not Found'}
+                    </h3>
+                    <p className="text-slate-500 text-sm mb-1">
+                        {language === 'th' ? 'ไม่มีสินค้านี้ในระบบสำหรับบาร์โค้ด:' : 'No item found for barcode:'}
+                    </p>
+                    <p className="font-mono font-bold text-slate-700 bg-slate-100 py-1 px-3 rounded-lg inline-block">
+                        {notFoundCode}
+                    </p>
+                </div>
+                <button
+                    onClick={closeNotFoundModal}
+                    className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition-colors"
+                >
+                    {language === 'th' ? 'ตกลง' : 'OK'}
+                </button>
+            </div>
+        </div>
+    );
+
     if (view === 'SCANNER') {
         return (
             <div className="max-w-xl mx-auto space-y-4">
+                {showNotFoundModal && <NotFoundModal />}
                 <button onClick={() => setView('SEARCH')} className="flex items-center text-slate-500 hover:text-slate-800 font-medium">
                     <ArrowLeft className="w-5 h-5 mr-1" /> {language === 'th' ? 'กลับไปค้นหา' : 'Back to Search'}
                 </button>
@@ -222,7 +249,9 @@ const ProductSearch = () => {
     // Default: SEARCH View
     return (
         <div className="max-w-xl mx-auto space-y-8 py-8">
+            {showNotFoundModal && <NotFoundModal />}
             <div className="text-center space-y-2">
+                {/* ... (Header remains same) */}
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 mb-2">
                     <Search className="w-8 h-8" />
                 </div>
@@ -256,8 +285,7 @@ const ProductSearch = () => {
                             </button>
                         )}
                     </div>
-
-                    {/* Suggestions */}
+                    {/* ... (Suggestions logic remains same) */}
                     {showSuggestions && suggestions.length > 0 && (
                         <div className="absolute z-50 w-full mt-2 bg-white rounded-xl shadow-xl border border-slate-100 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
                             {suggestions.map((item, idx) => (
@@ -297,5 +325,4 @@ const ProductSearch = () => {
         </div>
     );
 };
-
 export default ProductSearch;
