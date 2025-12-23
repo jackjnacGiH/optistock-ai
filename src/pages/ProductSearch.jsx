@@ -91,22 +91,8 @@ const ProductSearch = () => {
     };
 
     const handleScanSuccess = (code) => {
-        // Show confirmation dialog with scanned code
-        const confirmedCode = prompt(
-            language === 'th'
-                ? `สแกนได้: ${code}\n\nกรุณายืนยันหรือแก้ไขบาร์โค้ด:`
-                : `Scanned: ${code}\n\nPlease confirm or edit barcode:`,
-            code
-        );
-
-        if (!confirmedCode || !confirmedCode.trim()) {
-            // User cancelled, go back to search
-            setView('SEARCH');
-            return;
-        }
-
         setView('LOADING');
-        const scannedCode = String(confirmedCode).trim();
+        const scannedCode = String(code).trim();
 
         setTimeout(() => {
             // Strategy 1: Exact String Match (Case Insensitive)

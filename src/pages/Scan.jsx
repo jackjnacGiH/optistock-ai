@@ -71,21 +71,8 @@ const ScanPage = () => {
 
     // Handle successful scan
     const handleScan = async (code) => {
-        // Show confirmation dialog with scanned code
-        const confirmedCode = prompt(
-            language === 'th'
-                ? `สแกนได้: ${code}\n\nกรุณายืนยันหรือแก้ไขบาร์โค้ด:`
-                : `Scanned: ${code}\n\nPlease confirm or edit barcode:`,
-            code
-        );
-
-        if (confirmedCode && confirmedCode.trim()) {
-            setScannedCode(confirmedCode.trim());
-            loadProduct(confirmedCode.trim());
-        } else {
-            // User cancelled, go back to scan
-            setView('SCAN');
-        }
+        setScannedCode(code);
+        loadProduct(code);
     };
 
     const loadProduct = async (codeOrName) => {
