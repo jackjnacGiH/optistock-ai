@@ -103,7 +103,7 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
                 { facingMode: "environment" },
                 {
                     fps: 15, // Increase FPS for smoother scanning
-                    qrbox: { width: 300, height: 200 } // Larger and wider box to match barcodes
+                    qrbox: { width: 280, height: 140 } // Adjusted to fit the shorter frame
                 },
                 (decodedText) => {
                     stopScanner();
@@ -168,7 +168,7 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
             </div>
 
             {/* Scan Area */}
-            <div className="relative aspect-square bg-black rounded-2xl overflow-hidden shadow-lg border-2 border-slate-800 mb-4">
+            <div className="relative aspect-[21/9] bg-black rounded-2xl overflow-hidden shadow-lg border-2 border-slate-800 mb-4">
                 {deviceType === 'ios' ? (
                     <div ref={videoRef} className="w-full h-full" />
                 ) : (
