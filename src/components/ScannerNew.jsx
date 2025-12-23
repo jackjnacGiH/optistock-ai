@@ -77,7 +77,11 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
                     setLibraryLoaded(true);
                     setError('');
                     if (autoStart) {
-                        setTimeout(() => handleStartScan(), 1000);
+                        // Wait longer to ensure library is fully ready
+                        setTimeout(() => {
+                            console.log('Auto-starting scanner...');
+                            handleStartScan();
+                        }, 1500); // Increased from 1000ms to 1500ms
                     }
                 } else {
                     console.error('Script loaded but Html5Qrcode not found');
