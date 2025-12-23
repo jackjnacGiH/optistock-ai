@@ -71,14 +71,12 @@ const ScanPage = () => {
         setShowSuggestions(true);
     }, [manualCode, inventoryList]);
 
-    // Reset when navigating from dashboard
+    // Reset when navigating from dashboard (always reset when timestamp changes)
     useEffect(() => {
-        if (location.state?.reset) {
+        if (location.state?.resetTimestamp) {
             handleReset();
-            // Clear the state to prevent reset on subsequent renders
-            window.history.replaceState({}, document.title);
         }
-    }, [location]);
+    }, [location.state?.resetTimestamp]);
 
     // Handle successful scan
     const handleScan = async (code) => {

@@ -176,7 +176,7 @@ const Home = () => {
                     <p className="text-sm md:text-base text-slate-300 max-w-xl mb-4 md:mb-6">{t('dashboard.readyDesc')}</p>
                     <Link
                         to="/scan"
-                        state={{ reset: true }}
+                        state={{ resetTimestamp: Date.now() }}
                         className="inline-block bg-white text-slate-900 font-bold px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-slate-100 transition-colors text-sm md:text-base"
                     >
                         {t('dashboard.startScanning')}
