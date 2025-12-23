@@ -12,7 +12,8 @@ const ProductSearch = () => {
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
-    const [scannerKey, setScannerKey] = useState(0); // For forcing Scanner remount
+    const [scannerKey, setScannerKey] = useState(0);
+    const [isProcessing, setIsProcessing] = useState(false); // Add processing lock state // For forcing Scanner remount
     const searchRef = useRef(null);
     const { t, language } = useLanguage();
 
@@ -92,7 +93,9 @@ const ProductSearch = () => {
     };
 
     const handleScanSuccess = (code) => {
-        setView('LOADING');
+        if (isProcessing) return; // Ignore if already processing a scan
+        setIsProcessing(true);
+
         const scannedCode = String(code).trim();
 
         // Strategy 1: Exact String Match (Case Insensitive)
@@ -139,6 +142,7 @@ const ProductSearch = () => {
         if (found) {
             setSelectedProduct(found);
             setView('RESULT');
+            setIsProcessing(false); // Unlock for next time
         } else {
             alert(`${t('scan.productNotFound')}: ${scannedCode}`);
             // Force reset scanner state and return to search
@@ -147,6 +151,7 @@ const ProductSearch = () => {
     };
 
     const handleReset = () => {
+        setIsProcessing(false); // Unlock for next scan
         setView('SEARCH');
         setSelectedProduct(null);
         setSearchQuery('');
