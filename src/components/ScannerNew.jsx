@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Camera, Image as ImageIcon, RefreshCw, AlertCircle, Smartphone } from 'lucide-react';
 
 const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
-    const [isScanning, setIsScanning] = useState(false);
+    const [isScanning, setIsScanning] = useState(autoStart);
     const [error, setError] = useState('');
     const [deviceType, setDeviceType] = useState('unknown');
     const videoRef = useRef(null);
@@ -27,13 +27,11 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
         const checkLibrary = () => {
             const isReady = type === 'ios' ? !!window.Quagga : !!window.Html5Qrcode;
             if (isReady) {
-                console.log(`Scanner Library (${type}) is ready and pre-loaded!`);
                 if (autoStart) {
-                    setTimeout(() => handleStartScan(), 300);
+                    handleStartScan();
                 }
             } else {
-                console.warn(`Scanner Library (${type}) not found yet, waiting...`);
-                setTimeout(checkLibrary, 500); // Retry every 0.5s if not ready
+                setTimeout(checkLibrary, 100);
             }
         };
 
