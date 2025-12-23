@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Plus, Minus, ArrowLeft, Loader2, X } from 'lucide-react';
-import Scanner from '../components/Scanner';
+import Scanner from '../components/ScannerNew';
 import InventoryCard from '../components/InventoryCard';
 import { api } from '../services/api';
 import { useLanguage } from '../i18n/LanguageContext';
