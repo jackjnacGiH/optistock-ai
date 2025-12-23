@@ -147,9 +147,18 @@ const ScannerNew = ({ onScanSuccess, autoStart = false, processing = false }) =>
     const stopScanner = () => {
         setIsScanning(false);
         if (deviceType === 'ios' && window.Quagga) {
-            window.Quagga.stop();
-        } else if (deviceType === 'android' && html5ScannerRef.current) {
-            html5ScannerRef.current.stop().catch(e => console.error(e));
+            try { window.Quagga.stop(); } catch (e) { /* ignore */ }
+        } else if (deviceType !== 'unknown' && html5ScannerRef.current) {
+            try {
+                // Attempt to stop only if it seems active
+                html5ScannerRef.current.stop().catch(e => {
+                    // Ignore "not running" errors as they are harmless
+                    if (String(e).includes("not running")) return;
+                    console.warn("Scanner Stop Warning:", e);
+                });
+            } catch (e) {
+                // Safety net
+            }
         }
     };
 
