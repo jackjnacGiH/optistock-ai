@@ -32,34 +32,52 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
     }, []);
 
     // Load Quagga for iOS
-    const loadQuagga = () => {
+    const loadQuagga = (retryCount = 0) => {
         const script = document.createElement('script');
         script.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js';
         script.async = true;
         script.onload = () => {
             console.log('Quagga loaded (iOS)');
             setLibraryLoaded(true);
+            setError(''); // Clear error
             if (autoStart) {
                 setTimeout(() => handleStartScan(), 500);
             }
         };
-        script.onerror = () => setError('ไม่สามารถโหลด Scanner ได้');
+        script.onerror = () => {
+            console.error('Failed to load Quagga, retry:', retryCount);
+            if (retryCount < 3) {
+                setError(`กำลังโหลด Scanner... (ครั้งที่ ${retryCount + 1})`);
+                setTimeout(() => loadQuagga(retryCount + 1), 2000);
+            } else {
+                setError('ไม่สามารถโหลด Scanner ได้ กรุณาลองใหม่');
+            }
+        };
         document.body.appendChild(script);
     };
 
     // Load html5-qrcode for Android
-    const loadHtml5QrCode = () => {
+    const loadHtml5QrCode = (retryCount = 0) => {
         const script = document.createElement('script');
         script.src = 'https://unpkg.com/html5-qrcode';
         script.async = true;
         script.onload = () => {
             console.log('html5-qrcode loaded (Android)');
             setLibraryLoaded(true);
+            setError(''); // Clear error
             if (autoStart) {
                 setTimeout(() => handleStartScan(), 500);
             }
         };
-        script.onerror = () => setError('ไม่สามารถโหลด Scanner ได้');
+        script.onerror = () => {
+            console.error('Failed to load html5-qrcode, retry:', retryCount);
+            if (retryCount < 3) {
+                setError(`กำลังโหลด Scanner... (ครั้งที่ ${retryCount + 1})`);
+                setTimeout(() => loadHtml5QrCode(retryCount + 1), 2000);
+            } else {
+                setError('ไม่สามารถโหลด Scanner ได้ กรุณาลองใหม่');
+            }
+        };
         document.body.appendChild(script);
 
         return () => {
