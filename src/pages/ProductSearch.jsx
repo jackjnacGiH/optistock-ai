@@ -48,6 +48,10 @@ const ProductSearch = () => {
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [showNotFoundModal, setShowNotFoundModal] = useState(false);
     const [notFoundCode, setNotFoundCode] = useState('');
+    const [scannerKey, setScannerKey] = useState(0);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const searchRef = useRef(null);
+    const { t, language } = useLanguage();
 
     // Fetch Inventory on Mount
     useEffect(() => {
