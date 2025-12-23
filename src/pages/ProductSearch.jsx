@@ -5,6 +5,40 @@ import InventoryCard from '../components/InventoryCard';
 import { api } from '../services/api';
 import { useLanguage } from '../i18n/LanguageContext';
 
+// Internal Component for Modal
+const NotFoundModal = ({ isOpen, onClose, code }) => {
+    const { language } = useLanguage();
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full text-center space-y-4 animate-in zoom-in-95 duration-200">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <X className="w-8 h-8 text-red-500" />
+                </div>
+                <div>
+                    <h3 className="text-xl font-bold text-slate-800 mb-2">
+                        {language === 'th' ? 'ไม่พบสินค้า' : 'Product Not Found'}
+                    </h3>
+                    <p className="text-slate-500 text-sm mb-1">
+                        {language === 'th' ? 'ไม่มีสินค้านี้ในระบบสำหรับบาร์โค้ด:' : 'No item found for barcode:'}
+                    </p>
+                    <p className="font-mono font-bold text-slate-700 bg-slate-100 py-1 px-3 rounded-lg inline-block">
+                        {code}
+                    </p>
+                </div>
+                <button
+                    onClick={onClose}
+                    className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition-colors"
+                >
+                    {language === 'th' ? 'ตกลง' : 'OK'}
+                </button>
+            </div>
+        </div>
+    );
+};
+
 const ProductSearch = () => {
     const [view, setView] = useState('SEARCH'); // SEARCH, SCANNER, RESULT, LOADING
     const [searchQuery, setSearchQuery] = useState('');
@@ -167,41 +201,12 @@ const ProductSearch = () => {
         );
     }
 
-    // RENDER MODAL OVERLAY
-    const NotFoundModal = () => {
-        const { language } = useLanguage(); // Fix: Get language explicitly inside this component
-        return (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-                <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full text-center space-y-4 animate-in zoom-in-95 duration-200">
-                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <X className="w-8 h-8 text-red-500" />
-                    </div>
-                    <div>
-                        <h3 className="text-xl font-bold text-slate-800 mb-2">
-                            {language === 'th' ? 'ไม่พบสินค้า' : 'Product Not Found'}
-                        </h3>
-                        <p className="text-slate-500 text-sm mb-1">
-                            {language === 'th' ? 'ไม่มีสินค้านี้ในระบบสำหรับบาร์โค้ด:' : 'No item found for barcode:'}
-                        </p>
-                        <p className="font-mono font-bold text-slate-700 bg-slate-100 py-1 px-3 rounded-lg inline-block">
-                            {notFoundCode}
-                        </p>
-                    </div>
-                    <button
-                        onClick={closeNotFoundModal}
-                        className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition-colors"
-                    >
-                        {language === 'th' ? 'ตกลง' : 'OK'}
-                    </button>
-                </div>
-            </div>
-        );
-    };
+
 
     if (view === 'SCANNER') {
         return (
             <div className="max-w-xl mx-auto space-y-4">
-                {showNotFoundModal && <NotFoundModal />}
+                <NotFoundModal isOpen={showNotFoundModal} onClose={closeNotFoundModal} code={notFoundCode} />
                 <button onClick={() => setView('SEARCH')} className="flex items-center text-slate-500 hover:text-slate-800 font-medium">
                     <ArrowLeft className="w-5 h-5 mr-1" /> {language === 'th' ? 'กลับไปค้นหา' : 'Back to Search'}
                 </button>
@@ -252,7 +257,7 @@ const ProductSearch = () => {
     // Default: SEARCH View
     return (
         <div className="max-w-xl mx-auto space-y-8 py-8">
-            {showNotFoundModal && <NotFoundModal />}
+            <NotFoundModal isOpen={showNotFoundModal} onClose={closeNotFoundModal} code={notFoundCode} />
             <div className="text-center space-y-2">
                 {/* ... (Header remains same) */}
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 mb-2">
