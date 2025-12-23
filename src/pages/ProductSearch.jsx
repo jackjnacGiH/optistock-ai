@@ -168,32 +168,35 @@ const ProductSearch = () => {
     }
 
     // RENDER MODAL OVERLAY
-    const NotFoundModal = () => (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full text-center space-y-4 animate-in zoom-in-95 duration-200">
-                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <X className="w-8 h-8 text-red-500" />
+    const NotFoundModal = () => {
+        const { language } = useLanguage(); // Fix: Get language explicitly inside this component
+        return (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full text-center space-y-4 animate-in zoom-in-95 duration-200">
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <X className="w-8 h-8 text-red-500" />
+                    </div>
+                    <div>
+                        <h3 className="text-xl font-bold text-slate-800 mb-2">
+                            {language === 'th' ? 'ไม่พบสินค้า' : 'Product Not Found'}
+                        </h3>
+                        <p className="text-slate-500 text-sm mb-1">
+                            {language === 'th' ? 'ไม่มีสินค้านี้ในระบบสำหรับบาร์โค้ด:' : 'No item found for barcode:'}
+                        </p>
+                        <p className="font-mono font-bold text-slate-700 bg-slate-100 py-1 px-3 rounded-lg inline-block">
+                            {notFoundCode}
+                        </p>
+                    </div>
+                    <button
+                        onClick={closeNotFoundModal}
+                        className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition-colors"
+                    >
+                        {language === 'th' ? 'ตกลง' : 'OK'}
+                    </button>
                 </div>
-                <div>
-                    <h3 className="text-xl font-bold text-slate-800 mb-2">
-                        {language === 'th' ? 'ไม่พบสินค้า' : 'Product Not Found'}
-                    </h3>
-                    <p className="text-slate-500 text-sm mb-1">
-                        {language === 'th' ? 'ไม่มีสินค้านี้ในระบบสำหรับบาร์โค้ด:' : 'No item found for barcode:'}
-                    </p>
-                    <p className="font-mono font-bold text-slate-700 bg-slate-100 py-1 px-3 rounded-lg inline-block">
-                        {notFoundCode}
-                    </p>
-                </div>
-                <button
-                    onClick={closeNotFoundModal}
-                    className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition-colors"
-                >
-                    {language === 'th' ? 'ตกลง' : 'OK'}
-                </button>
             </div>
-        </div>
-    );
+        );
+    };
 
     if (view === 'SCANNER') {
         return (
