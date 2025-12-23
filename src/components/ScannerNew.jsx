@@ -27,71 +27,39 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
             loadQuagga();
         } else {
             setDeviceType('android');
-            // For Android, skip library loading and use file input directly
-            setLibraryLoaded(true);
-            setError('');
-            console.log('Android detected - using file input for scanning');
+            loadHtml5QrCode();
         }
     }, []);
 
     // Load Quagga for iOS
-    const loadQuagga = (retryCount = 0) => {
+    const loadQuagga = () => {
         const script = document.createElement('script');
         script.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js';
         script.async = true;
         script.onload = () => {
             console.log('Quagga loaded (iOS)');
             setLibraryLoaded(true);
-            setError(''); // Clear error
             if (autoStart) {
                 setTimeout(() => handleStartScan(), 500);
             }
         };
-        script.onerror = () => {
-            console.error('Failed to load Quagga, retry:', retryCount);
-            if (retryCount < 3) {
-                setError(`กำลังโหลด Scanner... (ครั้งที่ ${retryCount + 1})`);
-                setTimeout(() => loadQuagga(retryCount + 1), 2000);
-            } else {
-                setError('ไม่สามารถโหลด Scanner ได้ กรุณาลองใหม่');
-            }
-        };
+        script.onerror = () => setError('ไม่สามารถโหลด Scanner ได้');
         document.body.appendChild(script);
     };
 
     // Load html5-qrcode for Android
-    const loadHtml5QrCode = (retryCount = 0) => {
+    const loadHtml5QrCode = () => {
         const script = document.createElement('script');
-        script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+        script.src = 'https://unpkg.com/html5-qrcode';
         script.async = true;
         script.onload = () => {
-            // Validate that Html5Qrcode is actually available
-            if (typeof window.Html5Qrcode !== 'undefined') {
-                console.log('html5-qrcode loaded (Android)');
-                setLibraryLoaded(true);
-                setError(''); // Clear error
-                if (autoStart) {
-                    setTimeout(() => handleStartScan(), 500);
-                }
-            } else {
-                console.error('Html5Qrcode not found after script load');
-                if (retryCount < 3) {
-                    setError(`กำลังโหลด Scanner... (ครั้งที่ ${retryCount + 1})`);
-                    setTimeout(() => loadHtml5QrCode(retryCount + 1), 2000);
-                } else {
-                    setError('ไม่สามารถโหลด Scanner ได้ กรุณาลองใหม่');
-                }
+            console.log('html5-qrcode loaded (Android)');
+            setLibraryLoaded(true);
+            if (autoStart) {
+                setTimeout(() => handleStartScan(), 500);
             }
         };
-        script.onerror = () => {
-            console.error('Failed to load html5-qrcode, retry:', retryCount);
-            if (retryCount < 3) {
-                setError(`กำลังโหลด Scanner... (ครั้งที่ ${retryCount + 1})`);
-                setTimeout(() => loadHtml5QrCode(retryCount + 1), 2000);
-            } else {
-                setError('ไม่สามารถโหลด Scanner ได้ กรุณาลองใหม่');
-            }
-        };
+        script.onerror = () => setError('ไม่สามารถโหลด Scanner ได้');
         document.body.appendChild(script);
 
         return () => {
@@ -345,33 +313,17 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
                 {!isScanning && !error && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 text-white z-10 transition-all">
                         <Camera className={`w-16 h-16 mb-4 opacity-80 ${deviceType === 'ios' ? 'text-purple-500' : 'text-green-500'}`} />
-
-                        {deviceType === 'android' ? (
-                            // Android: Show file input button directly
-                            <>
-                                <button
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="bg-green-600 hover:bg-green-500 text-white px-8 py-3 rounded-full font-bold shadow-lg shadow-green-900/50 active:scale-95 transition-all flex items-center gap-2"
-                                >
-                                    <ImageIcon className="w-5 h-5" />
-                                    ถ่ายภาพเพื่อสแกน
-                                </button>
-                                <p className="mt-4 text-xs text-slate-400">กดเพื่อเปิดกล้องและถ่ายรูปบาร์โค้ด</p>
-                            </>
-                        ) : (
-                            // iOS: Show camera button
-                            <>
-                                <button
-                                    onClick={handleStartScan}
-                                    disabled={!libraryLoaded}
-                                    className="bg-purple-600 hover:bg-purple-500 shadow-purple-900/50 text-white px-8 py-3 rounded-full font-bold shadow-lg active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <Camera className="w-5 h-5" />
-                                    {libraryLoaded ? 'แตะเพื่อเปิดกล้อง' : 'กำลังโหลด...'}
-                                </button>
-                                <p className="mt-4 text-xs text-slate-400">Optimized for iOS</p>
-                            </>
-                        )}
+                        <button
+                            onClick={handleStartScan}
+                            disabled={!libraryLoaded}
+                            className={`${deviceType === 'ios' ? 'bg-purple-600 hover:bg-purple-500 shadow-purple-900/50' : 'bg-green-600 hover:bg-green-500 shadow-green-900/50'} text-white px-8 py-3 rounded-full font-bold shadow-lg active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                            <Camera className="w-5 h-5" />
+                            {libraryLoaded ? 'แตะเพื่อเปิดกล้อง' : 'กำลังโหลด...'}
+                        </button>
+                        <p className="mt-4 text-xs text-slate-400">
+                            {deviceType === 'ios' ? 'Optimized for iOS' : 'Optimized for Android'}
+                        </p>
                     </div>
                 )}
 
@@ -415,30 +367,9 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
                 )}
             </div>
 
-            {/* Fallback Option - Only for iOS */}
-            {deviceType === 'ios' && (
-                <div className="text-center">
-                    <p className="text-sm text-slate-500 mb-2">- หรือ -</p>
-                    <input
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        className="hidden"
-                        ref={fileInputRef}
-                        onChange={handleFileUpload}
-                    />
-                    <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="w-full py-3 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm"
-                    >
-                        <ImageIcon className="w-5 h-5 text-green-600" />
-                        ถ่ายภาพสแกน (รองรับทุกอุปกรณ์ 100%)
-                    </button>
-                </div>
-            )}
-
-            {/* Hidden file input for Android */}
-            {deviceType === 'android' && (
+            {/* Fallback Option */}
+            <div className="text-center">
+                <p className="text-sm text-slate-500 mb-2">- หรือ -</p>
                 <input
                     type="file"
                     accept="image/*"
@@ -447,7 +378,14 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
                     ref={fileInputRef}
                     onChange={handleFileUpload}
                 />
-            )}
+                <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full py-3 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm"
+                >
+                    <ImageIcon className="w-5 h-5 text-green-600" />
+                    ถ่ายภาพสแกน (รองรับทุกอุปกรณ์ 100%)
+                </button>
+            </div>
 
             {/* Hidden div for html5-qrcode file scan */}
             <div id="qr-reader-file" style={{ display: 'none' }}></div>
