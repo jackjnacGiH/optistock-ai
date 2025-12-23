@@ -4,7 +4,7 @@ import { mockInventory, mockHistory } from './mockData';
 const USE_MOCK = false;
 
 // ✅ Google Apps Script Web App URL (Deployed)
-const API_URL = 'https://script.google.com/macros/s/AKfycbwAdd8MyZZ_7K7pWI1vCvpnMp8Rq7B_nhQ4xV-Z7XxbyA2hfFI_Bn8UL9FFWWryC4nm/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbz1Hv0GoZXEDyN9tFMdSQ3zkUe0XdX4Iif3hJA2agOqDSb4wyf3r3Mks1lZ_hEivv1AMg/exec';
 
 // Spreadsheet ID (for reference)
 const SPREADSHEET_ID = "1c3U81eazLDTMQTdDScObASikKgYJf_qmKabn4Lyf1Og";
@@ -199,6 +199,32 @@ export const api = {
             return await response.json();
         } catch (e) {
             console.error('Error clearing history:', e);
+            throw e;
+        }
+    },
+
+    /**
+     * Get Dashboard Stats (Optimized Server-Side Aggregation)
+     */
+    getDashboardStats: async () => {
+        if (USE_MOCK) {
+            return new Promise((resolve) => {
+                setTimeout(() => resolve({
+                    totalItems: 1250,
+                    lowStock: 15,
+                    totalValue: 5000000,
+                    todayTx: 25,
+                    lowStockItems: [] // simplified mock
+                }), 500);
+            });
+        }
+        try {
+            const response = await fetch(`${API_URL}?action=getDashboardStats`);
+            // Check if response is valid JSON
+            if (!response.ok) throw new Error("Network response was not ok");
+            return await response.json();
+        } catch (e) {
+            console.error('Error fetching dashboard stats:', e);
             throw e;
         }
     },

@@ -28,68 +28,63 @@ const Home = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch Inventory
-                const invResponse = await api.getInventory();
-                let inventory = [];
-                if (Array.isArray(invResponse)) {
-                    inventory = invResponse;
-                } else if (invResponse && Array.isArray(invResponse.data)) {
-                    inventory = invResponse.data;
+                setLoading(true);
+                let useLegacyMethod = false;
+
+                // 1. Try Optimized Server-Side Aggregation
+                try {
+                    const statsData = await api.getDashboardStats();
+
+                    // Validate: If success but totalItems is 0, it is suspicious.
+                    // We FORCE FALLBACK if totalItems is 0 to be safe (in case backend mapping failed).
+                    if (statsData && statsData.success !== false && typeof statsData.totalItems === 'number' && statsData.totalItems > 0) {
+                        setStats({
+                            totalItems: statsData.totalItems || 0,
+                            lowStock: statsData.lowStock || 0,
+                            totalValue: statsData.totalValue || 0,
+                            todayTx: statsData.todayTx || 0
+                        });
+                        if (Array.isArray(statsData.lowStockItems)) {
+                            setLowStockItems(statsData.lowStockItems);
+                        }
+                    } else {
+                        console.warn("Optimized stats returned 0 items or invalid data. Force switching to legacy method...");
+                        useLegacyMethod = true; // FORCE LEGACY
+                    }
+                } catch (err) {
+                    console.warn("Optimized stats failed completely. Switching to legacy method.", err);
+                    useLegacyMethod = true;
                 }
 
-                // Fetch History for Transactions Today
-                const histResponse = await api.getHistory();
-                let history = [];
-                if (Array.isArray(histResponse)) {
-                    history = histResponse;
-                } else if (histResponse && Array.isArray(histResponse.data)) {
-                    history = histResponse.data;
+                // 2. Fallback: Legacy Client-Side Calculation
+                if (useLegacyMethod) {
+                    const invResponse = await api.getInventory();
+                    const histResponse = await api.getHistory();
+
+                    let inventory = Array.isArray(invResponse) ? invResponse : (invResponse?.data || []);
+                    let history = Array.isArray(histResponse) ? histResponse : (histResponse?.data || []);
+
+                    const validInventory = inventory.filter(item => item && item.barcode && String(item.barcode).trim() !== '');
+                    const totalItems = validInventory.length;
+
+                    const lowStockList = validInventory.filter(i => {
+                        const stock = parseInt(i.stock);
+                        const min = parseInt(i.minStock);
+                        return !isNaN(stock) && !isNaN(min) && min > 0 && stock !== 0 && stock <= min;
+                    });
+
+                    const today = new Date().toDateString();
+                    const todayTx = history.filter(h => {
+                        const txDate = h.timestamp ? new Date(h.timestamp) : new Date();
+                        return txDate.toDateString() === today;
+                    }).length;
+
+                    const totalValue = validInventory.reduce((acc, curr) => acc + (curr.stock * (curr.price || 0)), 0);
+
+                    setStats({ totalItems, lowStock: lowStockList.length, totalValue, todayTx });
+                    setLowStockItems(lowStockList);
                 }
 
-                // Clean data: Filter out empty rows (must have barcode)
-                // This fixes the issue where Google Sheets returns blank rows as data
-                const validInventory = inventory.filter(item => item.barcode && String(item.barcode).trim() !== '');
-
-                const totalItems = validInventory.length;
-
-                // Filter Low Stock Items (Valid entries only)
-                const lowStockList = validInventory.filter(i => {
-                    const stock = parseInt(i.stock);
-                    const min = parseInt(i.minStock);
-
-                    // Skip if values are invalid (NaN or empty)
-                    if (isNaN(stock) || isNaN(min)) {
-                        return false;
-                    }
-
-                    // Skip if minStock is not set (0 or negative)
-                    if (min <= 0) {
-                        return false;
-                    }
-
-                    // Skip if stock is exactly 0 or empty (but allow negative values)
-                    if (stock === 0) {
-                        return false;
-                    }
-
-                    // Show items where stock is less than or equal to minStock (including negative)
-                    return stock <= min;
-                });
-
-                const lowStockCount = lowStockList.length;
-                setLowStockItems(lowStockList);
-
-                // Calculate Transactions Today
-                const today = new Date().toDateString();
-                const todayTx = history.filter(h => {
-                    const txDate = h.timestamp ? new Date(h.timestamp) : new Date();
-                    return txDate.toDateString() === today;
-                }).length;
-
-                // Calculate total value
-                const totalValue = validInventory.reduce((acc, curr) => acc + (curr.stock * (curr.price || 0)), 0);
-
-                setStats({ totalItems, lowStock: lowStockCount, totalValue, todayTx });
             } catch (e) {
                 console.error('Error fetching dashboard data:', e);
             } finally {
