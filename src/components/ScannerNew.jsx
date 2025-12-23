@@ -55,36 +55,46 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
             setLibraryLoaded(true);
             setError('');
             if (autoStart) {
-                setTimeout(() => handleStartScan(), 500);
+                setTimeout(() => handleStartScan(), 1000); // Increased from 500ms to 1000ms
             }
             return;
+        }
+
+        // Show loading message
+        if (retryCount === 0) {
+            setError('กำลังโหลด Scanner...');
         }
 
         const script = document.createElement('script');
         script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
         script.async = true;
         script.onload = () => {
-            // Double check that library is actually available
-            if (window.Html5Qrcode) {
-                console.log('html5-qrcode loaded (Android)');
-                setLibraryLoaded(true);
-                setError('');
-                if (autoStart) {
-                    setTimeout(() => handleStartScan(), 500);
-                }
-            } else {
-                console.error('Script loaded but Html5Qrcode not found');
-                if (retryCount < 3) {
-                    setTimeout(() => loadHtml5QrCode(retryCount + 1), 1000);
+            // Wait a bit longer to ensure library is fully initialized
+            setTimeout(() => {
+                // Double check that library is actually available
+                if (window.Html5Qrcode) {
+                    console.log('html5-qrcode loaded (Android)');
+                    setLibraryLoaded(true);
+                    setError('');
+                    if (autoStart) {
+                        setTimeout(() => handleStartScan(), 1000);
+                    }
                 } else {
-                    setError('ไม่สามารถโหลด Scanner ได้\nกรุณากดปุ่ม "ลองใหม่"');
+                    console.error('Script loaded but Html5Qrcode not found');
+                    if (retryCount < 5) { // Increased from 3 to 5 retries
+                        setError(`กำลังโหลด Scanner... (${retryCount + 1}/5)`);
+                        setTimeout(() => loadHtml5QrCode(retryCount + 1), 2000); // Increased from 1000ms to 2000ms
+                    } else {
+                        setError('ไม่สามารถโหลด Scanner ได้\nกรุณากดปุ่ม "ลองใหม่"');
+                    }
                 }
-            }
+            }, 500); // Wait 500ms after script loads
         };
         script.onerror = () => {
             console.error('Failed to load html5-qrcode, retry:', retryCount);
-            if (retryCount < 3) {
-                setTimeout(() => loadHtml5QrCode(retryCount + 1), 1000);
+            if (retryCount < 5) { // Increased from 3 to 5 retries
+                setError(`กำลังโหลด Scanner... (${retryCount + 1}/5)`);
+                setTimeout(() => loadHtml5QrCode(retryCount + 1), 2000); // Increased from 1000ms to 2000ms
             } else {
                 setError('ไม่สามารถโหลด Scanner ได้\nกรุณากดปุ่ม "ลองใหม่"');
             }
