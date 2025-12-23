@@ -102,8 +102,8 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
             await scanner.start(
                 { facingMode: "environment" },
                 {
-                    fps: 10,
-                    qrbox: { width: 250, height: 250 }
+                    fps: 15, // Increase FPS for smoother scanning
+                    qrbox: { width: 300, height: 200 } // Larger and wider box to match barcodes
                 },
                 (decodedText) => {
                     stopScanner();
@@ -168,11 +168,18 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
             </div>
 
             {/* Scan Area */}
-            <div className="relative aspect-[4/3] bg-black rounded-2xl overflow-hidden shadow-lg border-2 border-slate-800 mb-4">
+            <div className="relative aspect-square bg-black rounded-2xl overflow-hidden shadow-lg border-2 border-slate-800 mb-4">
                 {deviceType === 'ios' ? (
                     <div ref={videoRef} className="w-full h-full" />
                 ) : (
                     <div id="qr-reader" className="w-full h-full" />
+                )}
+
+                {/* Animated Scanning Line */}
+                {isScanning && (
+                    <div className="absolute inset-0 pointer-events-none z-20">
+                        <div className="w-full h-0.5 bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.8)] absolute top-0 animate-scan-line"></div>
+                    </div>
                 )}
 
                 {!isScanning && !error && (
@@ -224,6 +231,18 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
             />
 
             <div id="qr-reader-file" style={{ display: 'none' }}></div>
+
+            <style>{`
+                @keyframes scan-line {
+                    0% { top: 0%; opacity: 0; }
+                    10% { opacity: 1; }
+                    90% { opacity: 1; }
+                    100% { top: 100%; opacity: 0; }
+                }
+                .animate-scan-line {
+                    animation: scan-line 3s linear infinite;
+                }
+            `}</style>
         </div>
     );
 };
