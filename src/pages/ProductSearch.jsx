@@ -91,8 +91,22 @@ const ProductSearch = () => {
     };
 
     const handleScanSuccess = (code) => {
+        // Show confirmation dialog with scanned code
+        const confirmedCode = prompt(
+            language === 'th'
+                ? `สแกนได้: ${code}\n\nกรุณายืนยันหรือแก้ไขบาร์โค้ด:`
+                : `Scanned: ${code}\n\nPlease confirm or edit barcode:`,
+            code
+        );
+
+        if (!confirmedCode || !confirmedCode.trim()) {
+            // User cancelled, go back to search
+            setView('SEARCH');
+            return;
+        }
+
         setView('LOADING');
-        const scannedCode = String(code).trim();
+        const scannedCode = String(confirmedCode).trim();
 
         setTimeout(() => {
             // Strategy 1: Exact String Match (Case Insensitive)
@@ -112,6 +126,27 @@ const ProductSearch = () => {
                     });
                 } catch (e) {
                     console.warn("Numeric comparison failed", e);
+                }
+            }
+
+            // Strategy 3: Partial Match (if still not found)
+            if (!found) {
+                found = inventoryList.find(i => {
+                    const barcode = String(i.barcode || '').toLowerCase();
+                    const search = scannedCode.toLowerCase();
+                    return barcode.includes(search) || search.includes(barcode);
+                });
+
+                // If found with partial match, ask for confirmation
+                if (found) {
+                    const confirm = window.confirm(
+                        language === 'th'
+                            ? `ไม่พบบาร์โค้ดที่ตรงกันทุกตัว\n\nพบสินค้าที่คล้ายกัน:\n${found.name}\nบาร์โค้ด: ${found.barcode}\n\nต้องการใช้สินค้านี้หรือไม่?`
+                            : `Exact match not found\n\nSimilar product found:\n${found.name}\nBarcode: ${found.barcode}\n\nUse this product?`
+                    );
+                    if (!confirm) {
+                        found = null;
+                    }
                 }
             }
 

@@ -71,8 +71,21 @@ const ScanPage = () => {
 
     // Handle successful scan
     const handleScan = async (code) => {
-        setScannedCode(code);
-        loadProduct(code);
+        // Show confirmation dialog with scanned code
+        const confirmedCode = prompt(
+            language === 'th'
+                ? `สแกนได้: ${code}\n\nกรุณายืนยันหรือแก้ไขบาร์โค้ด:`
+                : `Scanned: ${code}\n\nPlease confirm or edit barcode:`,
+            code
+        );
+
+        if (confirmedCode && confirmedCode.trim()) {
+            setScannedCode(confirmedCode.trim());
+            loadProduct(confirmedCode.trim());
+        } else {
+            // User cancelled, go back to scan
+            setView('SCAN');
+        }
     };
 
     const loadProduct = async (codeOrName) => {
@@ -80,10 +93,32 @@ const ScanPage = () => {
         // If we have local inventory, search instantly
         if (inventoryList.length > 0) {
             const searchTerm = String(codeOrName).trim().toLowerCase();
-            const found = inventoryList.find(i =>
+
+            // Try exact match first
+            let found = inventoryList.find(i =>
                 String(i.barcode).toLowerCase() === searchTerm ||
                 String(i.name).toLowerCase() === searchTerm
             );
+
+            // If not found, try partial match (barcode contains search term or vice versa)
+            if (!found) {
+                found = inventoryList.find(i => {
+                    const barcode = String(i.barcode).toLowerCase();
+                    return barcode.includes(searchTerm) || searchTerm.includes(barcode);
+                });
+
+                // If found with partial match, ask for confirmation
+                if (found) {
+                    const confirm = window.confirm(
+                        language === 'th'
+                            ? `ไม่พบบาร์โค้ดที่ตรงกันทุกตัว\n\nพบสินค้าที่คล้ายกัน:\n${found.name}\nบาร์โค้ด: ${found.barcode}\n\nต้องการใช้สินค้านี้หรือไม่?`
+                            : `Exact match not found\n\nSimilar product found:\n${found.name}\nBarcode: ${found.barcode}\n\nUse this product?`
+                    );
+                    if (!confirm) {
+                        found = null;
+                    }
+                }
+            }
 
             if (found) {
                 setupProductView(found);
