@@ -48,18 +48,47 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
     };
 
     // Load html5-qrcode for Android
-    const loadHtml5QrCode = () => {
-        const script = document.createElement('script');
-        script.src = 'https://unpkg.com/html5-qrcode';
-        script.async = true;
-        script.onload = () => {
-            console.log('html5-qrcode loaded (Android)');
+    const loadHtml5QrCode = (retryCount = 0) => {
+        // Check if already loaded
+        if (window.Html5Qrcode) {
+            console.log('html5-qrcode already loaded');
             setLibraryLoaded(true);
+            setError('');
             if (autoStart) {
                 setTimeout(() => handleStartScan(), 500);
             }
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+        script.async = true;
+        script.onload = () => {
+            // Double check that library is actually available
+            if (window.Html5Qrcode) {
+                console.log('html5-qrcode loaded (Android)');
+                setLibraryLoaded(true);
+                setError('');
+                if (autoStart) {
+                    setTimeout(() => handleStartScan(), 500);
+                }
+            } else {
+                console.error('Script loaded but Html5Qrcode not found');
+                if (retryCount < 3) {
+                    setTimeout(() => loadHtml5QrCode(retryCount + 1), 1000);
+                } else {
+                    setError('ไม่สามารถโหลด Scanner ได้\nกรุณากดปุ่ม "ลองใหม่"');
+                }
+            }
         };
-        script.onerror = () => setError('ไม่สามารถโหลด Scanner ได้');
+        script.onerror = () => {
+            console.error('Failed to load html5-qrcode, retry:', retryCount);
+            if (retryCount < 3) {
+                setTimeout(() => loadHtml5QrCode(retryCount + 1), 1000);
+            } else {
+                setError('ไม่สามารถโหลด Scanner ได้\nกรุณากดปุ่ม "ลองใหม่"');
+            }
+        };
         document.body.appendChild(script);
 
         return () => {
