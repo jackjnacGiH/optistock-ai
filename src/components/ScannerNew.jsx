@@ -102,8 +102,17 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
             await scanner.start(
                 { facingMode: "environment" },
                 {
-                    fps: 20, // Faster refresh for even better detection
-                    qrbox: { width: 320, height: 180 }
+                    fps: 10, // Standard stable FPS for better processing
+                    qrbox: { width: 320, height: 180 },
+                    // Target ONLY barcode formats to make it instant
+                    formatsToSupport: [
+                        0, // EAN_13
+                        1, // CODE_128
+                        2, // CODE_39
+                        6, // EAN_8
+                        11, // UPC_A
+                        12  // UPC_E
+                    ]
                 },
                 (decodedText) => {
                     stopScanner();
