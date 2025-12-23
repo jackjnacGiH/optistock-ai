@@ -94,56 +94,54 @@ const ProductSearch = () => {
         setView('LOADING');
         const scannedCode = String(code).trim();
 
-        setTimeout(() => {
-            // Strategy 1: Exact String Match (Case Insensitive)
-            let found = inventoryList.find(i =>
-                String(i.barcode || '').trim().toLowerCase() === scannedCode.toLowerCase()
-            );
+        // Strategy 1: Exact String Match (Case Insensitive)
+        let found = inventoryList.find(i =>
+            String(i.barcode || '').trim().toLowerCase() === scannedCode.toLowerCase()
+        );
 
-            // Strategy 2: Numeric Match (Handles leading zeros e.g., "00123" vs "123")
-            if (!found && !isNaN(scannedCode)) {
-                try {
-                    const scannedNum = Number(scannedCode);
-                    found = inventoryList.find(i => {
-                        const itemBarcode = i.barcode;
-                        // Skip text barcodes
-                        if (!itemBarcode || isNaN(itemBarcode)) return false;
-                        return Number(itemBarcode) === scannedNum;
-                    });
-                } catch (e) {
-                    console.warn("Numeric comparison failed", e);
-                }
-            }
-
-            // Strategy 3: Partial Match (if still not found)
-            if (!found) {
+        // Strategy 2: Numeric Match (Handles leading zeros e.g., "00123" vs "123")
+        if (!found && !isNaN(scannedCode)) {
+            try {
+                const scannedNum = Number(scannedCode);
                 found = inventoryList.find(i => {
-                    const barcode = String(i.barcode || '').toLowerCase();
-                    const search = scannedCode.toLowerCase();
-                    return barcode.includes(search) || search.includes(barcode);
+                    const itemBarcode = i.barcode;
+                    // Skip text barcodes
+                    if (!itemBarcode || isNaN(itemBarcode)) return false;
+                    return Number(itemBarcode) === scannedNum;
                 });
+            } catch (e) {
+                console.warn("Numeric comparison failed", e);
+            }
+        }
 
-                // If found with partial match, ask for confirmation
-                if (found) {
-                    const confirm = window.confirm(
-                        language === 'th'
-                            ? `ไม่พบบาร์โค้ดที่ตรงกันทุกตัว\n\nพบสินค้าที่คล้ายกัน:\n${found.name}\nบาร์โค้ด: ${found.barcode}\n\nต้องการใช้สินค้านี้หรือไม่?`
-                            : `Exact match not found\n\nSimilar product found:\n${found.name}\nBarcode: ${found.barcode}\n\nUse this product?`
-                    );
-                    if (!confirm) {
-                        found = null;
-                    }
+        // Strategy 3: Partial Match (if still not found)
+        if (!found) {
+            found = inventoryList.find(i => {
+                const barcode = String(i.barcode || '').toLowerCase();
+                const search = scannedCode.toLowerCase();
+                return barcode.includes(search) || search.includes(barcode);
+            });
+
+            // If found with partial match, ask for confirmation
+            if (found) {
+                const confirm = window.confirm(
+                    language === 'th'
+                        ? `ไม่พบบาร์โค้ดที่ตรงกันทุกตัว\n\nพบสินค้าที่คล้ายกัน:\n${found.name}\nบาร์โค้ด: ${found.barcode}\n\nต้องการใช้สินค้านี้หรือไม่?`
+                        : `Exact match not found\n\nSimilar product found:\n${found.name}\nBarcode: ${found.barcode}\n\nUse this product?`
+                );
+                if (!confirm) {
+                    found = null;
                 }
             }
+        }
 
-            if (found) {
-                setSelectedProduct(found);
-                setView('RESULT');
-            } else {
-                alert(`${t('scan.productNotFound')}: ${scannedCode}`);
-                setView('SEARCH');
-            }
-        }, 800);
+        if (found) {
+            setSelectedProduct(found);
+            setView('RESULT');
+        } else {
+            alert(`${t('scan.productNotFound')}: ${scannedCode}`);
+            setView('SEARCH');
+        }
     };
 
     const handleReset = () => {

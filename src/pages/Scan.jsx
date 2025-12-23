@@ -18,6 +18,7 @@ const ScanPage = () => {
     const [inventoryList, setInventoryList] = useState([]);
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
+    const [scannerKey, setScannerKey] = useState(0); // For forcing Scanner remount
     const searchRef = useRef(null);
 
     const { t, language } = useLanguage();
@@ -207,6 +208,8 @@ const ScanPage = () => {
         setAmount(0); // Default to 0 as requested
         setManualCode('');
         setSuggestions([]);
+        // Force Scanner to remount by changing key
+        setScannerKey(prev => prev + 1);
     };
 
     if (view === 'LOADING') {
@@ -316,7 +319,7 @@ const ScanPage = () => {
             </div>
 
             {/* Scanner Component */}
-            <Scanner onScanSuccess={handleScan} />
+            <Scanner key={scannerKey} onScanSuccess={handleScan} />
 
             <div className="relative">
                 <div className="absolute inset-0 flex items-center">
