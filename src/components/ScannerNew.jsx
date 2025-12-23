@@ -59,14 +59,25 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
     // Load html5-qrcode for Android
     const loadHtml5QrCode = (retryCount = 0) => {
         const script = document.createElement('script');
-        script.src = 'https://unpkg.com/html5-qrcode';
+        script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
         script.async = true;
         script.onload = () => {
-            console.log('html5-qrcode loaded (Android)');
-            setLibraryLoaded(true);
-            setError(''); // Clear error
-            if (autoStart) {
-                setTimeout(() => handleStartScan(), 500);
+            // Validate that Html5Qrcode is actually available
+            if (typeof window.Html5Qrcode !== 'undefined') {
+                console.log('html5-qrcode loaded (Android)');
+                setLibraryLoaded(true);
+                setError(''); // Clear error
+                if (autoStart) {
+                    setTimeout(() => handleStartScan(), 500);
+                }
+            } else {
+                console.error('Html5Qrcode not found after script load');
+                if (retryCount < 3) {
+                    setError(`กำลังโหลด Scanner... (ครั้งที่ ${retryCount + 1})`);
+                    setTimeout(() => loadHtml5QrCode(retryCount + 1), 2000);
+                } else {
+                    setError('ไม่สามารถโหลด Scanner ได้ กรุณาลองใหม่');
+                }
             }
         };
         script.onerror = () => {
