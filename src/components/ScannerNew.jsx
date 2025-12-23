@@ -182,12 +182,7 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
                     <div id="qr-reader" className="w-full h-full" />
                 )}
 
-                {/* Animated Scanning Line */}
-                {isScanning && (
-                    <div className="absolute inset-0 pointer-events-none z-20">
-                        <div className="w-full h-0.5 bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.8)] absolute top-0 animate-scan-line"></div>
-                    </div>
-                )}
+
 
                 {!isScanning && !error && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 text-white z-10">
@@ -213,8 +208,8 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
                 )}
 
                 {isScanning && (
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-green-500/90 text-white px-4 py-2 rounded-full text-sm font-bold animate-pulse z-30 flex items-center gap-2">
-                        <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
+                    <div className="absolute top-2 left-2 bg-green-500/90 text-white px-2 py-1 rounded-full text-[10px] font-bold z-30 flex items-center gap-1 shadow-sm">
+                        <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
                         สแกนเนอร์กำลังทำงาน
                     </div>
                 )}
@@ -239,17 +234,7 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
 
             <div id="qr-reader-file" style={{ display: 'none' }}></div>
 
-            <style>{`
-                @keyframes scan-line {
-                    0% { top: 0%; opacity: 0; }
-                    10% { opacity: 1; }
-                    90% { opacity: 1; }
-                    100% { top: 100%; opacity: 0; }
-                }
-                .animate-scan-line {
-                    animation: scan-line 3s linear infinite;
-                }
-            `}</style>
+
         </div>
     );
 };
