@@ -89,7 +89,7 @@ const ProductSearch = () => {
             const barcode = String(item.barcode || '').toLowerCase();
             const name = String(item.name || '').toLowerCase();
             return barcode.includes(term) || name.includes(term);
-        }).slice(0, 10);
+        }).slice(0, 100);
         setSuggestions(matches);
         setShowSuggestions(true);
     }, [searchQuery, inventoryList]);
