@@ -12,6 +12,7 @@ const ProductSearch = () => {
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
+    const [scannerKey, setScannerKey] = useState(0); // For forcing Scanner remount
     const searchRef = useRef(null);
     const { t, language } = useLanguage();
 
@@ -148,6 +149,7 @@ const ProductSearch = () => {
         setView('SEARCH');
         setSelectedProduct(null);
         setSearchQuery('');
+        setScannerKey(prev => prev + 1); // Force Scanner remount
     };
 
     // --- RENDER ---
@@ -170,7 +172,7 @@ const ProductSearch = () => {
                 <div className="text-center mb-4">
                     <h2 className="text-xl font-bold text-slate-800">{language === 'th' ? 'สแกนสินค้า' : 'Scan Product'}</h2>
                 </div>
-                <Scanner onScanSuccess={handleScanSuccess} autoStart={true} />
+                <Scanner key={scannerKey} onScanSuccess={handleScanSuccess} autoStart={true} />
             </div>
         );
     }
