@@ -262,12 +262,9 @@ const ScannerNew = ({ onScanSuccess, autoStart = false, processing = false }) =>
                 )}
             </div>
 
-            {/* SPACER for fixed bottom controls */}
-            <div className="h-32"></div>
-
-            {/* --- BOTTOM CONTROLS (FIXED) --- */}
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] z-50 rounded-t-3xl">
-                <div className="max-w-md mx-auto flex items-center gap-3">
+            {/* --- CONTROLS (BELOW CAMERA) --- */}
+            <div className="mt-4 p-4 bg-white/50 backdrop-blur-sm border border-slate-100 shadow-sm rounded-2xl">
+                <div className="flex items-center gap-3">
                     {/* File Upload Button (Small) */}
                     <div>
                         <input
@@ -280,7 +277,7 @@ const ScannerNew = ({ onScanSuccess, autoStart = false, processing = false }) =>
                         />
                         <label
                             htmlFor="file-upload"
-                            className="flex flex-col items-center justify-center w-14 h-14 bg-slate-100 text-slate-500 rounded-2xl active:bg-slate-200 active:scale-95 transition-all cursor-pointer border border-slate-200"
+                            className="flex flex-col items-center justify-center w-14 h-14 bg-white text-slate-500 rounded-xl hover:bg-slate-50 active:scale-95 transition-all cursor-pointer border border-slate-200 shadow-sm"
                         >
                             <ImageIcon className="w-6 h-6" />
                         </label>
@@ -290,7 +287,7 @@ const ScannerNew = ({ onScanSuccess, autoStart = false, processing = false }) =>
                     {isScanning ? (
                         <button
                             onClick={stopScanner}
-                            className="flex-1 h-14 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-bold shadow-red-200 shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-lg"
+                            className="flex-1 h-14 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold shadow-red-200 shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-lg"
                         >
                             <span className="w-3 h-3 bg-white rounded-sm animate-pulse" />
                             หยุดสแกน
@@ -299,16 +296,13 @@ const ScannerNew = ({ onScanSuccess, autoStart = false, processing = false }) =>
                         <button
                             onClick={handleStartScan}
                             disabled={processing}
-                            className={`flex-1 h-14 ${deviceType === 'ios' ? 'bg-purple-600 shadow-purple-200' : 'bg-green-600 shadow-green-200'} hover:opacity-90 text-white rounded-2xl font-bold shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-lg ${processing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`flex-1 h-14 ${deviceType === 'ios' ? 'bg-purple-600 shadow-purple-200' : 'bg-green-600 shadow-green-200'} hover:opacity-90 text-white rounded-xl font-bold shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-lg ${processing ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             <Camera className="w-6 h-6" />
                             {processing ? 'กำลังประมวลผล...' : 'เปิดกล้องสแกน'}
                         </button>
                     )}
                 </div>
-
-                {/* Safe Area for iPhones without home button */}
-                <div className="h-4 w-full"></div>
             </div>
         </div>
     );
