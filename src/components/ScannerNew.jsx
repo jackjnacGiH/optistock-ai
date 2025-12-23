@@ -85,23 +85,17 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
                     }
                 } else {
                     console.error('Script loaded but Html5Qrcode not found');
-                    if (retryCount < 5) { // Increased from 3 to 5 retries
-                        setError(`กำลังโหลด Scanner... (${retryCount + 1}/5)`);
-                        setTimeout(() => loadHtml5QrCode(retryCount + 1), 2000); // Increased from 1000ms to 2000ms
-                    } else {
-                        setError('ไม่สามารถโหลด Scanner ได้\nกรุณากดปุ่ม "ลองใหม่"');
-                    }
+                    // Infinite retry - keep trying until success
+                    setError(`กำลังโหลด Scanner... (ครั้งที่ ${retryCount + 1})\nกรุณารอสักครู่...`);
+                    setTimeout(() => loadHtml5QrCode(retryCount + 1), 2000);
                 }
             }, 500); // Wait 500ms after script loads
         };
         script.onerror = () => {
             console.error('Failed to load html5-qrcode, retry:', retryCount);
-            if (retryCount < 5) { // Increased from 3 to 5 retries
-                setError(`กำลังโหลด Scanner... (${retryCount + 1}/5)`);
-                setTimeout(() => loadHtml5QrCode(retryCount + 1), 2000); // Increased from 1000ms to 2000ms
-            } else {
-                setError('ไม่สามารถโหลด Scanner ได้\nกรุณากดปุ่ม "ลองใหม่"');
-            }
+            // Infinite retry - keep trying until success
+            setError(`กำลังโหลด Scanner... (ครั้งที่ ${retryCount + 1})\nกรุณารอสักครู่...`);
+            setTimeout(() => loadHtml5QrCode(retryCount + 1), 2000);
         };
         document.body.appendChild(script);
 
@@ -372,14 +366,11 @@ const ScannerNew = ({ onScanSuccess, autoStart = false }) => {
 
                 {error && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/95 text-white z-20 p-6 text-center">
-                        <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-                        <p className="mb-6 text-sm whitespace-pre-line">{error}</p>
-                        <button
-                            onClick={handleStartScan}
-                            className="bg-white text-slate-900 px-6 py-2 rounded-full font-bold flex items-center gap-2"
-                        >
-                            <RefreshCw className="w-4 h-4" /> ลองใหม่
-                        </button>
+                        <div className="w-12 h-12 mb-4 relative">
+                            <div className="absolute inset-0 border-4 border-green-500/30 rounded-full"></div>
+                            <div className="absolute inset-0 border-4 border-green-500 rounded-full border-t-transparent animate-spin"></div>
+                        </div>
+                        <p className="text-sm whitespace-pre-line">{error}</p>
                     </div>
                 )}
 
