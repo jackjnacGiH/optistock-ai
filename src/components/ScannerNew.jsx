@@ -208,11 +208,20 @@ const ScannerNew = ({ onScanSuccess, autoStart = false, processing = false }) =>
             </div>
 
             {/* Scan Area */}
-            <div className="relative aspect-video bg-black rounded-2xl overflow-hidden shadow-lg border-2 border-slate-800 mb-4">
+            <div className={`relative aspect-[4/3] bg-black rounded-2xl overflow-hidden shadow-lg border-2 border-slate-800 mb-4 transition-all duration-300 ${isScanning ? 'scale-100' : 'scale-[0.98] opacity-80'}`}>
                 {deviceType === 'ios' ? (
                     <div ref={videoRef} className="w-full h-full [&>video]:w-full [&>video]:h-full [&>video]:object-cover" />
                 ) : (
                     <div id="qr-reader" className="w-full h-full" />
+                )}
+
+                {/* Status Overlay in Top Corner */}
+                {isScanning && (
+                    <div className="absolute top-4 left-4 z-20">
+                        <span className="bg-red-500/80 text-white text-[10px] px-2 py-1 rounded-sm animate-pulse flex items-center gap-1">
+                            <div className="w-1.5 h-1.5 bg-white rounded-full" /> LIVE
+                        </span>
+                    </div>
                 )}
 
                 {/* --- CUSTOM CSS TO HIDE LIBRARY GUIDES --- */}
@@ -222,7 +231,7 @@ const ScannerNew = ({ onScanSuccess, autoStart = false, processing = false }) =>
                     #qr-reader div { box-shadow: none !important; border: none !important; }
                 `}</style>
 
-                {/* --- LOADING / PROCESSING OVERLAY --- */}
+                {/* Loading Processing Overlay */}
                 {processing && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 text-white z-40 animate-in fade-in duration-200">
                         <RefreshCw className="w-12 h-12 text-blue-500 animate-spin mb-4" />
@@ -230,68 +239,76 @@ const ScannerNew = ({ onScanSuccess, autoStart = false, processing = false }) =>
                     </div>
                 )}
 
-                {/* Start Button Overlay */}
-                {!isScanning && !error && !processing && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 text-white z-20">
-                        <Camera className={`w-16 h-16 mb-4 opacity-80 ${deviceType === 'ios' ? 'text-purple-500' : 'text-green-500'}`} />
-                        <button
-                            onClick={handleStartScan}
-                            className={`${deviceType === 'ios' ? 'bg-purple-600' : 'bg-green-600'} text-white px-8 py-3 rounded-full font-bold shadow-lg active:scale-95 transition-all flex items-center gap-2`}
-                        >
-                            <Camera className="w-5 h-5" />
-                            เปิดกล้องสแกน
-                        </button>
+                {/* Placeholder Overlay (When not scanning) */}
+                {!isScanning && !processing && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 backdrop-blur-sm z-10">
+                        <Camera className="w-20 h-20 text-slate-500/50 mb-2" />
+                        <p className="text-slate-400 text-sm">กล้องปิดอยู่</p>
                     </div>
                 )}
 
                 {/* Error Overlay */}
                 {error && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-900/90 text-white z-20 p-4 text-center">
-                        <AlertCircle className="w-12 h-12 mb-2 text-red-300" />
-                        <p className="mb-4 text-sm">{error}</p>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-900/95 text-white z-50 p-6 text-center animate-in zoom-in-95">
+                        <AlertCircle className="w-16 h-16 mb-4 text-red-300" />
+                        <p className="mb-6 text-base font-medium">{error}</p>
                         <button
-                            onClick={handleStartScan}
-                            className="bg-white text-red-900 px-6 py-2 rounded-full font-bold hover:bg-red-50"
+                            onClick={() => { setError(''); handleStartScan(); }}
+                            className="bg-white text-red-900 px-8 py-3 rounded-full font-bold shadow-lg active:scale-95 transition-all"
                         >
-                            ลองใหม่
+                            ลองอีกครั้ง
                         </button>
                     </div>
                 )}
             </div>
 
-            {/* Instruction / Status */}
-            <div className="text-center space-y-2">
-                {isScanning ? (
-                    <div className="flex items-center justify-center gap-2 text-green-600 bg-green-50 py-2 px-4 rounded-full mx-auto w-fit animate-in slide-in-from-bottom-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                        <span className="text-xs font-medium">สแกนเนอร์พร้อมทำงาน (แตะที่บาร์โค้ด)</span>
-                    </div>
-                ) : processing ? (
-                    <div className="text-blue-500 text-sm font-medium animate-pulse">
-                        กำลังตรวจสอบข้อมูล...
-                    </div>
-                ) : (
-                    <p className="text-slate-400 text-sm">กดปุ่มเพื่อเริ่มสแกน</p>
-                )}
-            </div>
+            {/* SPACER for fixed bottom controls */}
+            <div className="h-32"></div>
 
-            {/* Hidden File Input for Image Upload */}
-            <div className="mt-4 flex justify-center">
-                <input
-                    type="file"
-                    accept="image/*"
-                    ref={fileInputRef}
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    id="file-upload"
-                />
-                <label
-                    htmlFor="file-upload"
-                    className="flex items-center gap-2 text-slate-400 text-xs cursor-pointer hover:text-slate-600 transition-colors p-2 border border-slate-200 rounded-lg hover:bg-slate-50"
-                >
-                    <ImageIcon className="w-4 h-4" />
-                    <span id="qr-reader-file">ถ่ายภาพสแกน (ใช้เมื่อกล้องไม่ทำงาน)</span>
-                </label>
+            {/* --- BOTTOM CONTROLS (FIXED) --- */}
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] z-50 rounded-t-3xl">
+                <div className="max-w-md mx-auto flex items-center gap-3">
+                    {/* File Upload Button (Small) */}
+                    <div>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            ref={fileInputRef}
+                            onChange={handleFileUpload}
+                            className="hidden"
+                            id="file-upload"
+                        />
+                        <label
+                            htmlFor="file-upload"
+                            className="flex flex-col items-center justify-center w-14 h-14 bg-slate-100 text-slate-500 rounded-2xl active:bg-slate-200 active:scale-95 transition-all cursor-pointer border border-slate-200"
+                        >
+                            <ImageIcon className="w-6 h-6" />
+                        </label>
+                    </div>
+
+                    {/* Main Scan Button (Large) */}
+                    {isScanning ? (
+                        <button
+                            onClick={stopScanner}
+                            className="flex-1 h-14 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-bold shadow-red-200 shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-lg"
+                        >
+                            <span className="w-3 h-3 bg-white rounded-sm animate-pulse" />
+                            หยุดสแกน
+                        </button>
+                    ) : (
+                        <button
+                            onClick={handleStartScan}
+                            disabled={processing}
+                            className={`flex-1 h-14 ${deviceType === 'ios' ? 'bg-purple-600 shadow-purple-200' : 'bg-green-600 shadow-green-200'} hover:opacity-90 text-white rounded-2xl font-bold shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-lg ${processing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                            <Camera className="w-6 h-6" />
+                            {processing ? 'กำลังประมวลผล...' : 'เปิดกล้องสแกน'}
+                        </button>
+                    )}
+                </div>
+
+                {/* Safe Area for iPhones without home button */}
+                <div className="h-4 w-full"></div>
             </div>
         </div>
     );
