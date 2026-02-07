@@ -485,7 +485,7 @@ const CustomLabelModal = ({ isOpen, onClose }) => {
                                 )}
 
                                 {/* Presets List */}
-                                <div className="space-y-2 max-h-[150px] overflow-auto">
+                                <div className="space-y-2 max-h-[400px] overflow-auto">
                                     {presets.length === 0 ? (
                                         <p className="text-slate-500 text-center py-3 text-sm">
                                             {language === 'th' ? 'ยังไม่มีรูปแบบที่บันทึก' : 'No presets saved'}
