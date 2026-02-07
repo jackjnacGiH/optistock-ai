@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
-import { LayoutDashboard, ScanLine, History, Menu, Package, Languages, Brain, Search } from 'lucide-react';
+import { LayoutDashboard, ScanLine, History, Menu, Package, Languages, Brain, Search, Tag } from 'lucide-react';
 import clsx from 'clsx';
 import { useLanguage } from '../i18n/LanguageContext';
+import CustomLabelModal from './CustomLabelModal';
 
 const NavItem = ({ to, icon: Icon, label, active, onClick }) => (
     <Link
@@ -24,9 +25,13 @@ const Layout = () => {
     const location = useLocation();
     const path = location.pathname;
     const { language, toggleLanguage, t } = useLanguage();
+    const [showCustomLabel, setShowCustomLabel] = useState(false);
 
     return (
         <div className="flex flex-col h-screen-safe bg-slate-50 md:flex-row overflow-hidden">
+            {/* Custom Label Modal */}
+            <CustomLabelModal isOpen={showCustomLabel} onClose={() => setShowCustomLabel(false)} />
+
             {/* Desktop Sidebar */}
             <aside className="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 shadow-sm h-full">
                 <div className="p-6 flex items-center gap-3 flex-shrink-0">
@@ -53,6 +58,15 @@ const Layout = () => {
                     />
                     <NavItem to="/history" icon={History} label={t('nav.history')} active={path === "/history"} />
                     <NavItem to="/ai-analysis" icon={Brain} label="AI Insights" active={path === "/ai-analysis"} />
+
+                    {/* Custom Label Button */}
+                    <button
+                        onClick={() => setShowCustomLabel(true)}
+                        className="flex items-center w-full px-4 py-3 text-sm gap-3 rounded-lg text-slate-500 hover:text-primary hover:bg-slate-50 transition-colors"
+                    >
+                        <Tag className="w-5 h-5" />
+                        <span>{language === 'th' ? 'พิมพ์ฉลากเอง' : 'Custom Label'}</span>
+                    </button>
                 </nav>
 
                 {/* Language Toggle Button */}
